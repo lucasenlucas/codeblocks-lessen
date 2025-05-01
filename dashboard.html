@@ -55,6 +55,14 @@
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
     }
 
+    .thumbnail {
+      width: 100%;
+      height: 140px;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+    }
+
     .card-title {
       font-size: 1.1rem;
       font-weight: 600;
@@ -147,6 +155,14 @@
           const data = doc.data();
           const card = document.createElement("div");
           card.className = "card";
+
+          if (data.thumbnail) {
+            const img = document.createElement("img");
+            img.src = data.thumbnail;
+            img.alt = data.title;
+            img.className = "thumbnail";
+            card.appendChild(img);
+          }
 
           const title = document.createElement("div");
           title.className = "card-title";
