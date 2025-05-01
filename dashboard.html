@@ -6,10 +6,7 @@
   <title>Dashboard – Codeblocks</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    * {
-      box-sizing: border-box;
-    }
-
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       padding: 2rem;
@@ -17,27 +14,23 @@
       background-color: #f2f4f8;
       color: #111827;
     }
-
     header {
       text-align: center;
       margin-bottom: 2rem;
     }
-
     h1 {
       font-size: 2.2rem;
       font-weight: 700;
       color: #1f2937;
       margin-bottom: 0.5rem;
     }
-
     .grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); /* groter */
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
       gap: 2rem;
       max-width: 1400px;
       margin: 0 auto;
     }
-
     .card {
       background: white;
       border-radius: 12px;
@@ -47,39 +40,18 @@
       display: flex;
       flex-direction: column;
     }
-
     .card:hover {
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
     }
-
     .thumbnail {
-      width: 100%;
-      height: 160px;
+      width: 100%; height: 160px;
       object-fit: cover;
       border-radius: 8px;
       margin-bottom: 1rem;
     }
-
-    .card-title {
-      font-size: 1.2rem;
-      font-weight: 600;
-      margin-bottom: 0.25rem;
-      color: #111827;
-    }
-
-    .card-subtitle {
-      font-size: 0.95rem;
-      color: #6b7280;
-      margin-bottom: 1rem;
-    }
-
-    .card a {
-      margin-top: auto;
-      font-weight: 600;
-      text-decoration: none;
-      color: #4a90e2;
-    }
-
+    .card-title { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.25rem; }
+    .card-subtitle { font-size: 0.95rem; color: #6b7280; margin-bottom: 1rem; }
+    .card a { font-weight: 600; text-decoration: none; color: #4a90e2; }
     .logout {
       display: block;
       margin: 3rem auto 0;
@@ -91,16 +63,37 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background-color 0.2s ease;
     }
-
-    .logout:hover {
-      background-color: #d1d5db;
+    .logout:hover { background-color: #d1d5db; }
+    #loading { text-align: center; color: #6b7280; }
+    .profile-block {
+      max-width: 500px;
+      margin: 3rem auto 2rem;
+      padding: 1.5rem;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.05);
     }
-
-    #loading {
-      text-align: center;
+    .profile-block h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1rem;
+    }
+    .profile-item {
+      margin-bottom: 0.5rem;
+      color: #374151;
+    }
+    .note {
+      margin-top: 1rem;
+      font-size: 0.9rem;
       color: #6b7280;
+    }
+    .change-password {
+      margin-top: 1rem;
+      display: inline-block;
+      font-size: 0.95rem;
+      color: #4a90e2;
+      cursor: pointer;
+      text-decoration: underline;
     }
   </style>
 </head>
@@ -109,15 +102,23 @@
     <h1>Jouw Codeblocks Modules</h1>
     <p id="loading">Modules laden...</p>
   </header>
-
   <main class="grid" id="module-list"></main>
+
+  <div class="profile-block" id="profile">
+    <h2>👤 Profielgegevens</h2>
+    <div class="profile-item" id="profile-name">Naam: ...</div>
+    <div class="profile-item" id="profile-org">School: ...</div>
+    <div class="profile-item" id="profile-email">E-mail: ...</div>
+    <div class="change-password" id="change-password">🔑 Wachtwoord wijzigen</div>
+    <div class="note">🗑️ Account verwijderen? Neem contact op via <strong>info@howtohack.nl</strong></div>
+  </div>
 
   <button class="logout" id="logout-btn">Log uit</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, collection, query, where, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -136,19 +137,21 @@
     const loadingText = document.getElementById("loading");
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) {
-        window.location.href = "index.html";
-        return;
+      if (!user) return location.href = "index.html";
+
+      // Profiel tonen
+      document.getElementById("profile-email").textContent = `E-mail: ${user.email}`;
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        document.getElementById("profile-name").textContent = `Naam: ${data.name || "-"}`;
+        document.getElementById("profile-org").textContent = `School: ${data.organization || "-"}`;
       }
 
-      const q = query(
-        collection(db, "modules"),
-        where("assignedTo", "array-contains", user.email)
-      );
-
+      // Modules laden
+      const q = query(collection(db, "modules"), where("assignedTo", "array-contains", user.email));
       const querySnapshot = await getDocs(q);
       loadingText.remove();
-
       if (querySnapshot.empty) {
         moduleList.innerHTML = "<p style='text-align: center;'>Je hebt nog geen modules toegewezen gekregen.</p>";
       } else {
@@ -188,9 +191,18 @@
     });
 
     document.getElementById("logout-btn").addEventListener("click", () => {
-      signOut(auth).then(() => {
-        window.location.href = "index.html";
-      });
+      signOut(auth).then(() => location.href = "index.html");
+    });
+
+    document.getElementById("change-password").addEventListener("click", () => {
+      const user = auth.currentUser;
+      if (user) {
+        sendPasswordResetEmail(auth, user.email).then(() => {
+          alert("Je ontvangt een e-mail om je wachtwoord te wijzigen.");
+        }).catch((error) => {
+          alert("Er ging iets mis: " + error.message);
+        });
+      }
     });
   </script>
 </body>
