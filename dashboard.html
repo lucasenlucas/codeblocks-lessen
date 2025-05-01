@@ -9,56 +9,76 @@
     * {
       box-sizing: border-box;
     }
+
     body {
       margin: 0;
       padding: 2rem;
       font-family: 'Inter', sans-serif;
-      background-color: #0f1012;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
+      background-color: #f2f4f8;
+      color: #111827;
     }
 
-    .container {
-      background: #1c1d21;
-      border-radius: 16px;
-      padding: 2rem;
-      width: 100%;
-      max-width: 600px;
-      box-shadow: 0 0 25px rgba(0,0,0,0.2);
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
     }
 
     h1 {
+      font-size: 2rem;
+      font-weight: 600;
       background: linear-gradient(90deg, #ff4a4a, #4a90e2);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
-      font-size: 1.8rem;
-      text-align: center;
-      margin-bottom: 1rem;
+      margin-bottom: 0.25rem;
     }
 
-    .module-card {
-      background: #2b2c2f;
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: white;
       border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-      transition: 0.2s;
+      padding: 1.25rem;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+      transition: all 0.2s ease;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
-    .module-card:hover {
-      background: #35373a;
+    .card:hover {
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.1);
     }
 
-    .module-card a {
+    .card-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.25rem;
+      color: #111827;
+    }
+
+    .card-subtitle {
+      font-size: 0.9rem;
+      color: #6b7280;
+      margin-bottom: 0.75rem;
+    }
+
+    .card a {
+      display: inline-block;
+      margin-top: auto;
+      font-weight: 600;
       text-decoration: none;
-      color: white;
-      font-weight: bold;
-      display: block;
+      color: #4a90e2;
     }
 
-    button {
-      margin-top: 2rem;
+    .logout {
+      display: block;
+      margin: 2rem auto 0;
       padding: 0.75rem 2rem;
       background: linear-gradient(90deg, #ff4a4a, #4a90e2);
       color: white;
@@ -70,20 +90,20 @@
     }
 
     #loading {
-      color: #aaa;
-      font-size: 1rem;
-      margin-top: 1rem;
+      text-align: center;
+      color: #6b7280;
     }
   </style>
 </head>
 <body>
-  <div class="container">
+  <header>
     <h1>Jouw Codeblocks Modules</h1>
-    <div id="module-list">
-      <p id="loading">Modules laden...</p>
-    </div>
-    <button id="logout-btn">🔒 Log uit</button>
-  </div>
+    <p id="loading">Modules laden...</p>
+  </header>
+
+  <main class="grid" id="module-list"></main>
+
+  <button class="logout" id="logout-btn">🔒 Log uit</button>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
@@ -104,7 +124,7 @@
     const db = getFirestore(app);
 
     const moduleList = document.getElementById("module-list");
-    const logoutBtn = document.getElementById("logout-btn");
+    const loadingText = document.getElementById("loading");
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) {
@@ -118,28 +138,39 @@
       );
 
       const querySnapshot = await getDocs(q);
-      moduleList.innerHTML = "";
+      loadingText.remove();
 
       if (querySnapshot.empty) {
-        moduleList.innerHTML = "<p>Je hebt nog geen modules toegewezen gekregen.</p>";
+        moduleList.innerHTML = "<p style='text-align: center;'>Je hebt nog geen modules toegewezen gekregen.</p>";
       } else {
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           const card = document.createElement("div");
-          card.className = "module-card";
+          card.className = "card";
+
+          const title = document.createElement("div");
+          title.className = "card-title";
+          title.textContent = data.title;
+
+          const subtitle = document.createElement("div");
+          subtitle.className = "card-subtitle";
+          subtitle.textContent = data.subtitle || "Codeblocks Lesmodule";
 
           const link = document.createElement("a");
           link.href = data.url;
           link.target = "_blank";
-          link.innerText = data.title;
+          link.textContent = "Open module →";
 
+          card.appendChild(title);
+          card.appendChild(subtitle);
           card.appendChild(link);
+
           moduleList.appendChild(card);
         });
       }
     });
 
-    logoutBtn.addEventListener("click", () => {
+    document.getElementById("logout-btn").addEventListener("click", () => {
       signOut(auth).then(() => {
         window.location.href = "index.html";
       });
