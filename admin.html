@@ -92,8 +92,9 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc, addDoc, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, setDoc, addDoc, collection, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -110,7 +111,7 @@
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return location.href = "index.html";
-      const userDoc = await (await import("https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js")).getDoc(doc(db, "users", user.uid));
+      const userDoc = await getDoc(doc(db, "users", user.uid));
       if (!userDoc.exists() || userDoc.data().role !== "admin") location.href = "dashboard.html";
     });
 
@@ -120,17 +121,22 @@
       const name = document.getElementById("user-name").value;
       const org = document.getElementById("user-org").value;
 
-      const tempAuth = getAuth();
-      const userCred = await createUserWithEmailAndPassword(tempAuth, email, password);
-      const newUID = userCred.user.uid;
+      const tempApp = initializeApp(firebaseConfig, 'TempApp');
+      const tempAuth = getAuth(tempApp);
+      try {
+        const userCred = await createUserWithEmailAndPassword(tempAuth, email, password);
+        const newUID = userCred.user.uid;
 
-      await setDoc(doc(db, "users", newUID), {
-        name,
-        organization: org,
-        role: "user"
-      });
+        await setDoc(doc(db, "users", newUID), {
+          name,
+          organization: org,
+          role: "user"
+        });
 
-      alert("Gebruiker aangemaakt!");
+        alert("Gebruiker aangemaakt!");
+      } catch (err) {
+        alert("Fout bij aanmaken: " + err.message);
+      }
     });
 
     document.getElementById("add-module").addEventListener("click", async () => {
