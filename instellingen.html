@@ -165,13 +165,16 @@
         <label for="password">Wachtwoord wijzigen</label>
         <button onclick="changePassword()">Verzend resetlink</button>
       </div>
+    <div class="setting-row">
+        <button onclick="updateUserData()">Wijzigingen opslaan</button>
+      </div>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -213,6 +216,33 @@
         });
       }
     };
-  </script>
+    window.updateUserData = async function () {
+    const user = auth.currentUser;
+    if (!user) return;
+
+    const naam = document.getElementById("naam").value;
+    const school = document.getElementById("school").value;
+    const email = document.getElementById("email").value;
+
+    const docRef = doc(db, "users", user.uid);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists() && docSnap.data().role === "admin") {
+      await setDoc(docRef, {
+        name: naam,
+        organization: school,
+        role: docSnap.data().role
+      }, { merge: true });
+    }
+
+    if (email && email !== user.email) {
+      user.updateEmail(email).then(() => {
+        alert("E-mailadres gewijzigd (indien toegestaan). Je moet mogelijk opnieuw inloggen.");
+      }).catch((error) => {
+        alert("E-mailadres wijzigen mislukt: " + error.message);
+      });
+    }
+  };
+</script>
 </body>
 </html>
