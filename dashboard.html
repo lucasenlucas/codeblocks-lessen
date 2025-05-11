@@ -144,10 +144,72 @@
   </aside>
 
   <main class="main-content">
-    <h1 class="section-title">Jouw Modules</h1>
+    <h1 class="section-title" id="welcome-title">Jouw Modules</h1>
     <div class="grid" id="module-list">
       <!-- Dynamische content -->
     </div>
   </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.firebasestorage.app",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const moduleList = document.getElementById("module-list");
+    const welcomeTitle = document.getElementById("welcome-title");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return location.href = "index.html";
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      const name = userDoc.exists() ? userDoc.data().name : "Gebruiker";
+      welcomeTitle.textContent = `Welkom ${name}, hier staan jouw modules`;
+
+      const q = query(collection(db, "modules"), where("assignedTo", "array-contains", user.email));
+      const snapshot = await getDocs(q);
+
+      if (snapshot.empty) {
+        moduleList.innerHTML = "<p style='color: var(--clr-text-muted); text-align: center;'>Geen modules gevonden.</p>";
+      } else {
+        snapshot.forEach((doc) => {
+          const data = doc.data();
+          const card = document.createElement("div");
+          card.className = "card";
+
+          const title = document.createElement("div");
+          title.className = "card-title";
+          title.textContent = data.title || "Naamloze module";
+
+          const subtitle = document.createElement("div");
+          subtitle.className = "card-subtitle";
+          subtitle.textContent = data.subtitle || "Codeblocks Lesmodule";
+
+          const link = document.createElement("a");
+          link.href = data.url || "#";
+          link.textContent = "Open module →";
+          link.target = "_blank";
+
+          card.appendChild(title);
+          card.appendChild(subtitle);
+          card.appendChild(link);
+
+          moduleList.appendChild(card);
+        });
+      }
+    });
+  </script>
 </body>
 </html>
