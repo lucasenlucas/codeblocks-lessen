@@ -189,12 +189,19 @@
     <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
     <input type="password" placeholder="Wachtwoord" id="password">
     <button class="login-button" onclick="loginUser()">Inloggen</button>
+    <button class="login-button" onclick="loginWithGoogle()">Log in met Google</button>
     <a href="#" class="forgot">Wachtwoord vergeten?</a>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, signInWithEmailAndPassword, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithPopup
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -218,6 +225,15 @@
         await signInWithEmailAndPassword(auth, email, password);
       } catch (error) {
         handleAuthError(error.code);
+      }
+    };
+
+    window.loginWithGoogle = async function () {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        document.getElementById("error").textContent = "Google login mislukt: " + error.message;
       }
     };
 
