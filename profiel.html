@@ -12,19 +12,19 @@
       --clr-primary: #7355ff;
       --clr-primary-light: #a18bff;
       --clr-danger: #ff4a4a;
+      --clr-danger-dark: #e63939;
       --clr-text: #e7e9f7;
       --clr-text-muted: #8a8fae;
       --radius: 1rem;
-      --transition: 220ms ease;
+      --transition: 200ms ease-in-out;
     }
 
-    * {
+    *, *::before, *::after {
       box-sizing: border-box;
-      margin: 0;
-      padding: 0;
     }
 
     body {
+      margin: 0;
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
       color: var(--clr-text);
@@ -45,31 +45,31 @@
       z-index: -1;
     }
 
-    .sidebar {
-      width: 220px;
+    nav.sidebar {
+      width: 240px;
       background-color: var(--clr-bg-accent);
-      padding: 2rem 1rem;
+      padding: 2rem 1.2rem;
       display: flex;
       flex-direction: column;
       gap: 1rem;
       box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
     }
 
-    .sidebar h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1.5rem;
+    nav.sidebar h2 {
+      font-size: 1.6rem;
+      margin-bottom: 2rem;
       text-align: center;
       color: var(--clr-primary);
     }
 
     .menu-item {
       font-size: 1rem;
-      color: var(--clr-text);
       padding: 0.75rem 1rem;
       border-radius: var(--radius);
-      transition: var(--transition);
-      cursor: pointer;
+      color: var(--clr-text);
       text-decoration: none;
+      transition: background-color var(--transition), color var(--transition);
+      display: block;
     }
 
     .menu-item:hover {
@@ -77,18 +77,18 @@
       color: #fff;
     }
 
-    .menu-item:last-child {
+    .menu-item.logout {
       background-color: var(--clr-danger);
       color: #fff;
     }
 
-    .menu-item:last-child:hover {
-      background-color: #e63939;
+    .menu-item.logout:hover {
+      background-color: var(--clr-danger-dark);
     }
 
-    .main-content {
+    main.main-content {
       flex: 1;
-      padding: 2rem;
+      padding: 2.5rem;
       overflow-y: auto;
     }
 
@@ -103,11 +103,11 @@
       border-radius: var(--radius);
       max-width: 500px;
       margin: auto;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     .profile-row {
-      margin-bottom: 1rem;
+      margin-bottom: 1.2rem;
     }
 
     .label {
@@ -117,17 +117,18 @@
 
     .value {
       margin-left: 0.5rem;
+      word-break: break-word;
     }
   </style>
 </head>
 <body>
-  <aside class="sidebar">
+  <nav class="sidebar">
     <h2>Codeblocks</h2>
     <a class="menu-item" href="dashboard.html">Dashboard</a>
     <a class="menu-item" href="profiel.html">Profiel</a>
     <a class="menu-item" href="instellingen.html">Instellingen</a>
-    <div class="menu-item">Log uit</div>
-  </aside>
+    <a class="menu-item logout" href="index.html">Log uit</a>
+  </nav>
 
   <main class="main-content">
     <h1 class="section-title">Profiel</h1>
