@@ -135,6 +135,15 @@
       font-weight: 600;
       cursor: pointer;
     }
+
+    .disabled-box {
+      background-color: rgba(255, 255, 255, 0.05);
+      border-left: 4px solid var(--clr-danger);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      color: var(--clr-text-muted);
+      font-style: italic;
+    }
   </style>
 </head>
 <body>
@@ -162,14 +171,16 @@
         <input type="email" id="email" placeholder="Nieuw e-mailadres invoeren...">
       </div>
       <div class="setting-row">
-        <label for="password">Wachtwoord wijzigen</label>
-        <button onclick="changePassword()">Verzend resetlink</button>
+        <label for="password">🔒 Wachtwoord wijzigen</label>
+        <div class="disabled-box">
+          Deze functie is binnenkort beschikbaar. Het wijzigen van je wachtwoord is momenteel nog niet mogelijk.
+        </div>
       </div>
-    <div class="setting-row">
+      <div class="setting-row">
         <button onclick="updateUserData()">Wijzigingen opslaan</button>
       </div>
     </div>
-  <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Wijzigingen opgeslagen!</div>
+    <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Wijzigingen opgeslagen!</div>
   </main>
 
   <script type="module">
@@ -207,61 +218,52 @@
       }
     });
 
-    window.changePassword = function () {
+    window.updateUserData = async function () {
       const user = auth.currentUser;
-      if (user) {
-        sendPasswordResetEmail(auth, user.email).then(() => {
-          alert("Je ontvangt een e-mail om je wachtwoord te wijzigen.");
+      if (!user) return;
+
+      const naam = document.getElementById("naam").value;
+      const school = document.getElementById("school").value;
+      const email = document.getElementById("email").value;
+
+      const docRef = doc(db, "users", user.uid);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists() && docSnap.data().role === "admin") {
+        await setDoc(docRef, {
+          name: naam,
+          organization: school,
+          role: docSnap.data().role
+        }, { merge: true });
+      }
+
+      if (email && email !== user.email) {
+        user.updateEmail(email).then(() => {
+          showPopup("E-mailadres gewijzigd (indien toegestaan). Je moet mogelijk opnieuw inloggen.");
         }).catch((error) => {
-          alert("Er ging iets mis: " + error.message);
+          showPopup("E-mailadres wijzigen mislukt: " + error.message);
         });
+      } else {
+        showPopup("Wijzigingen opgeslagen!");
       }
     };
-    window.updateUserData = async function () {
-  const user = auth.currentUser;
-  if (!user) return;
 
-  const naam = document.getElementById("naam").value;
-  const school = document.getElementById("school").value;
-  const email = document.getElementById("email").value;
+    function showPopup(message) {
+      const popup = document.getElementById("save-popup");
+      popup.textContent = message;
+      popup.style.display = "block";
+      setTimeout(() => {
+        popup.style.display = "none";
+      }, 3000);
+    }
 
-  const docRef = doc(db, "users", user.uid);
-  const docSnap = await getDoc(docRef);
-
-  if (docSnap.exists() && docSnap.data().role === "admin") {
-    await setDoc(docRef, {
-      name: naam,
-      organization: school,
-      role: docSnap.data().role
-    }, { merge: true });
-  }
-
-  if (email && email !== user.email) {
-    user.updateEmail(email).then(() => {
-      showPopup("E-mailadres gewijzigd (indien toegestaan). Je moet mogelijk opnieuw inloggen.");
-    }).catch((error) => {
-      showPopup("E-mailadres wijzigen mislukt: " + error.message);
+    // Log uit knop
+    const logoutBtn = document.querySelector('.menu-item:last-child');
+    logoutBtn.addEventListener('click', () => {
+      auth.signOut().then(() => {
+        location.href = 'index.html';
+      });
     });
-  } else {
-    showPopup("Wijzigingen opgeslagen!");
-  }
-};
-function showPopup(message) {
-  const popup = document.getElementById("save-popup");
-  popup.textContent = message;
-  popup.style.display = "block";
-  setTimeout(() => {
-    popup.style.display = "none";
-  }, 3000);
-}
-
-// Log uit knop
-const logoutBtn = document.querySelector('.menu-item:last-child');
-logoutBtn.addEventListener('click', () => {
-  auth.signOut().then(() => {
-    location.href = 'index.html';
-  });
-});
-</script>
+  </script>
 </body>
 </html>
