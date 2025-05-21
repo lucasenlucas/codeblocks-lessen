@@ -135,15 +135,6 @@
       font-weight: 600;
       cursor: pointer;
     }
-
-    .disabled-box {
-      background-color: rgba(255, 255, 255, 0.05);
-      border-left: 4px solid var(--clr-danger);
-      padding: 1rem;
-      border-radius: 0.5rem;
-      color: var(--clr-text-muted);
-      font-style: italic;
-    }
   </style>
 </head>
 <body>
@@ -171,12 +162,6 @@
         <input type="email" id="email" placeholder="Nieuw e-mailadres invoeren...">
       </div>
       <div class="setting-row">
-        <label for="password">🔒 Wachtwoord wijzigen</label>
-        <div class="disabled-box">
-          Deze functie is binnenkort beschikbaar. Het wijzigen van je wachtwoord is momenteel nog niet mogelijk.
-        </div>
-      </div>
-      <div class="setting-row">
         <button onclick="updateUserData()">Wijzigingen opslaan</button>
       </div>
     </div>
@@ -185,7 +170,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -257,7 +242,6 @@
       }, 3000);
     }
 
-    // Log uit knop
     const logoutBtn = document.querySelector('.menu-item:last-child');
     logoutBtn.addEventListener('click', () => {
       auth.signOut().then(() => {
