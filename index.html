@@ -47,59 +47,17 @@
       z-index: -4;
     }
 
-    body::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-color: transparent;
-      background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
-      background-size: 50px 50px;
-      z-index: -3;
-      opacity: 0.4;
-    }
-
-    .background-glow {
-      position: absolute;
-      bottom: 0;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--clr-primary-light) 0%, transparent 60%);
-      opacity: 0.15;
-      filter: blur(60px);
-      transform: translateY(50%);
-      z-index: -2;
-      animation: pulseGlow 6s ease-in-out infinite;
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.12; transform: scale(1) translateY(50%); }
-      50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
-    }
-
     .login-card {
       background: var(--clr-bg-accent);
       border: 1px solid rgba(255,255,255,0.06);
       padding: 2.5rem;
       border-radius: var(--radius);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
       width: 90%;
       max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      animation: fadeIn 0.8s ease forwards;
-      opacity: 0;
-      transform: translateY(30px);
       z-index: 1;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
     }
 
     .logo {
@@ -126,12 +84,6 @@
       background-color: #0f132c;
       color: var(--clr-text);
       font-size: 1rem;
-      transition: border-color var(--transition);
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--clr-primary-light);
     }
 
     .login-button {
@@ -142,30 +94,100 @@
       padding: 0.75rem;
       font-weight: 600;
       cursor: pointer;
-      transition: transform var(--transition), box-shadow var(--transition);
-    }
-
-    .login-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4);
-    }
-
-    .forgot {
-      font-size: 0.9rem;
-      color: var(--clr-primary-light);
-      text-decoration: none;
-      align-self: flex-start;
     }
 
     .error-message {
       color: #ff6b6b;
       font-size: 0.95rem;
       text-align: center;
-      margin: -0.5rem 0 0.5rem 0;
     }
   </style>
 </head>
 <body>
-  <!-- Body blijft hetzelfde -->
+  <div class="login-card">
+    <img src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks logo" class="logo">
+    <h2 class="gradient-text">Inloggen bij Codeblocks</h2>
+    <div id="error" class="error-message"></div>
+    <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
+    <input type="password" placeholder="Wachtwoord" id="password">
+    <button class="login-button" onclick="loginUser()">Inloggen</button>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      getDoc,
+      setDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.appspot.com",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let failCount = 0;
+    let blockCount = 0;
+
+    window.loginUser = async function () {
+      const email = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
+
+      if (localStorage.getItem("blockedUntil")) {
+        const now = Date.now();
+        const unblock = parseInt(localStorage.getItem("blockedUntil"));
+        if (now < unblock) {
+          const seconds = Math.ceil((unblock - now) / 1000);
+          errorDiv.textContent = `Je bent tijdelijk geblokkeerd. Wacht ${seconds} seconden.`;
+          return;
+        } else {
+          localStorage.removeItem("blockedUntil");
+          localStorage.removeItem("failCount");
+        }
+      }
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        failCount = parseInt(localStorage.getItem("failCount") || "0") + 1;
+        localStorage.setItem("failCount", failCount);
+
+        if (failCount >= 9) {
+          const docRef = doc(db, "blocked", email);
+          await setDoc(docRef, { blocked: true, timestamp: Date.now() });
+          errorDiv.textContent = "Je account is geblokkeerd. Neem contact op.";
+        } else if (failCount % 3 === 0) {
+          blockCount++;
+          const waitTime = 60000 * blockCount;
+          localStorage.setItem("blockedUntil", Date.now() + waitTime);
+          errorDiv.textContent = `Te veel foute pogingen. Je bent ${waitTime / 1000} seconden geblokkeerd.`;
+        } else {
+          errorDiv.textContent = "Ongeldige login. Probeer opnieuw.";
+        }
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "dashboard.html";
+      }
+    });
+  </script>
 </body>
 </html>
