@@ -60,6 +60,7 @@
       border-radius: var(--radius);
       transition: var(--transition);
       cursor: pointer;
+      text-decoration: none;
     }
 
     .menu-item:hover {
@@ -157,7 +158,7 @@
     <a class="menu-item" href="dashboard.html">Dashboard</a>
     <a class="menu-item" href="profiel.html">Profiel</a>
     <a class="menu-item" href="instellingen.html">Instellingen</a>
-    <div class="menu-item">Log uit</div>
+    <div class="menu-item" id="logout">Log uit</div>
   </aside>
 
   <main class="main-content">
@@ -170,7 +171,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, collection, query, where, getDocs, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -252,6 +253,12 @@
       const term = searchInput.value.toLowerCase();
       const filtered = modulesData.filter(mod => mod.title?.toLowerCase().includes(term));
       renderModules(filtered);
+    });
+
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        location.href = "index.html";
+      });
     });
   </script>
 </body>
