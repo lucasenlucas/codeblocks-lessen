@@ -20,20 +20,13 @@
       --transition: 220ms ease;
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
     body {
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
       color: var(--clr-text);
       display: flex;
       height: 100vh;
-      overflow: hidden;
-      position: relative;
+      margin: 0;
     }
 
     .sidebar {
@@ -43,24 +36,14 @@
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
-    }
-
-    .sidebar h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      color: var(--clr-primary);
     }
 
     .menu-item {
-      font-size: 1rem;
       color: var(--clr-text);
       padding: 0.75rem 1rem;
       border-radius: var(--radius);
-      transition: var(--transition);
-      cursor: pointer;
       text-decoration: none;
+      transition: var(--transition);
     }
 
     .menu-item:hover {
@@ -94,7 +77,6 @@
       border-radius: var(--radius);
       max-width: 600px;
       margin: auto;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
     }
 
     .setting-row {
@@ -107,8 +89,7 @@
       margin-bottom: 0.5rem;
     }
 
-    .setting-row input,
-    .setting-row select {
+    .setting-row input {
       width: 100%;
       padding: 0.75rem;
       border-radius: var(--radius);
@@ -127,17 +108,18 @@
       cursor: pointer;
     }
 
-    #save-popup {
-      text-align: center;
-      margin-top: 1rem;
-      color: var(--clr-primary-light);
-      font-weight: 600;
+    #theme-toggle {
+      padding: 0.5rem 1rem;
+      background-color: var(--clr-primary-light);
+      color: white;
+      border: none;
+      border-radius: var(--radius);
+      cursor: pointer;
     }
   </style>
 </head>
 <body>
   <aside class="sidebar">
-    <h2>Codeblocks</h2>
     <a class="menu-item" href="dashboard.html">Dashboard</a>
     <a class="menu-item" href="profiel.html">Profiel</a>
     <a class="menu-item" href="instellingen.html">Instellingen</a>
@@ -148,29 +130,31 @@
     <h1 class="section-title">Instellingen</h1>
     <div class="settings-block">
       <div class="setting-row">
-        <label for="email">E-mailadres aanpassen</label>
-        <input type="email" id="email" placeholder="Nieuw e-mailadres invoeren...">
+        <label for="naam">Naam</label>
+        <input type="text" id="naam" />
       </div>
-
       <div class="setting-row">
-        <label for="theme">Thema</label>
-        <select id="theme" onchange="updateTheme()">
-          <option value="dark">Donker</option>
-          <option value="light">Licht</option>
-        </select>
+        <label for="school">School / Organisatie</label>
+        <input type="text" id="school" />
       </div>
-
       <div class="setting-row">
-        <button onclick="saveSettings()">Wijzigingen opslaan</button>
+        <label for="email">E-mailadres</label>
+        <input type="email" id="email" />
       </div>
-
-      <div id="save-popup" style="display: none;">Wijzigingen opgeslagen!</div>
+      <div class="setting-row">
+        <label>Thema</label>
+        <button id="theme-toggle" onclick="toggleTheme()">Wissel Thema</button>
+      </div>
+      <div class="setting-row">
+        <button onclick="saveSettings()">Opslaan</button>
+      </div>
     </div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -183,45 +167,54 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    let currentUser;
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return location.href = "index.html";
-      document.getElementById("email").value = user.email || "";
+      if (!user) return (location.href = "index.html");
+      currentUser = user;
+
+      const docSnap = await getDoc(doc(db, "users", user.uid));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        document.getElementById("naam").value = data.name || "";
+        document.getElementById("school").value = data.organization || "";
+        document.getElementById("email").value = user.email || "";
+      }
     });
 
-    window.saveSettings = () => {
-      const emailInput = document.getElementById("email").value;
-      if (emailInput) {
-        auth.currentUser.updateEmail(emailInput)
-          .then(() => showPopup("E-mailadres gewijzigd."))
-          .catch(err => showPopup("Fout: " + err.message));
-      } else {
-        showPopup("Geen wijzigingen.");
-      }
-    };
+    window.saveSettings = async () => {
+      const naam = document.getElementById("naam").value;
+      const school = document.getElementById("school").value;
+      const email = document.getElementById("email").value;
 
-    function showPopup(msg) {
-      const popup = document.getElementById("save-popup");
-      popup.textContent = msg;
-      popup.style.display = "block";
-      setTimeout(() => popup.style.display = "none", 3000);
-    }
+      await setDoc(doc(db, "users", currentUser.uid), {
+        name: naam,
+        organization: school
+      }, { merge: true });
+
+      if (email && email !== currentUser.email) {
+        currentUser.updateEmail(email).catch(err => alert("E-mail wijzigen mislukt: " + err.message));
+      }
+
+      alert("Instellingen opgeslagen!");
+    };
 
     document.getElementById("logout").addEventListener("click", () => {
       signOut(auth).then(() => location.href = "index.html");
     });
 
-    // Thema-functionaliteit
-    const themeSelect = document.getElementById("theme");
+    // Thema-wisselaar
+    const themeKey = "theme";
     const root = document.documentElement;
-    const savedTheme = localStorage.getItem("theme") || "dark";
-    themeSelect.value = savedTheme;
-    applyTheme(savedTheme);
+    const currentTheme = localStorage.getItem(themeKey) || "dark";
+    applyTheme(currentTheme);
 
-    window.updateTheme = () => {
-      const theme = themeSelect.value;
-      localStorage.setItem("theme", theme);
-      applyTheme(theme);
+    window.toggleTheme = () => {
+      const newTheme = localStorage.getItem(themeKey) === "light" ? "dark" : "light";
+      localStorage.setItem(themeKey, newTheme);
+      applyTheme(newTheme);
     };
 
     function applyTheme(theme) {
