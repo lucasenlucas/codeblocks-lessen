@@ -163,6 +163,22 @@
     .popup-content h2 {
       margin-top: 0;
     }
+
+    .popup-content input {
+      width: 100%;
+      margin: 0.5rem 0;
+      padding: 0.5rem;
+      border-radius: var(--radius);
+      border: none;
+      background-color: #0f132c;
+      color: white;
+    }
+
+    .edit-icon {
+      float: right;
+      cursor: pointer;
+      color: var(--clr-primary-light);
+    }
   </style>
 </head>
 <body>
@@ -222,7 +238,12 @@
           <strong>${data.name || "Naamloos"}</strong>
           <div>${data.role || "Gebruiker"}</div>
         `;
-        card.onclick = () => openPopup(`<h2>${data.name || "Naamloos"}</h2><p>Rol: ${data.role || "Gebruiker"}</p><p>Email: ${data.email || "Onbekend"}</p>`);
+        card.onclick = () => openPopup(`
+          <h2>${data.name || "Naamloos"}</h2>
+          <div><strong>Naam:</strong> <span contenteditable="true">${data.name || ""}</span> <span class="edit-icon">✏️</span></div>
+          <div><strong>Organisatie:</strong> <span contenteditable="true">${data.organization || ""}</span> <span class="edit-icon">✏️</span></div>
+          <div><strong>Rol:</strong> <span contenteditable="true">${data.role || ""}</span> <span class="edit-icon">✏️</span></div>
+        `);
         grid.appendChild(card);
       });
     }
@@ -249,11 +270,19 @@
     });
 
     function addUser() {
-      alert("Gebruiker toevoegen (volgende stap)");
+      const name = prompt("Naam van gebruiker:");
+      const organization = prompt("Organisatie:");
+      const role = prompt("Rol (user/admin):", "user");
+      const email = prompt("E-mail:");
+      alert("Gebruiker toevoegen is nog niet gekoppeld aan Firebase Auth. Volgende stap!");
     }
 
     function addModule() {
-      alert("Module toevoegen (volgende stap)");
+      const title = prompt("Titel van module:");
+      const thumbnail = prompt("Link naar thumbnail:");
+      const url = prompt("Link naar module:");
+      const assignedTo = prompt("E-mail van gebruiker (of meerdere gescheiden met komma):");
+      alert(`Module '${title}' wordt toegevoegd voor ${assignedTo}`);
     }
   </script>
 </body>
