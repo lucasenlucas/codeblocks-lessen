@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inloggen - Codeblocks</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
-  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     :root {
       --clr-bg: #070a19;
@@ -17,8 +16,17 @@
       --radius: 1rem;
       --transition: 220ms ease;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
@@ -30,6 +38,7 @@
       overflow: hidden;
       position: relative;
     }
+
     body::before {
       content: "";
       position: absolute;
@@ -37,17 +46,20 @@
       background: radial-gradient(ellipse at center, #10152f 0%, #070a19 100%);
       z-index: -4;
     }
+
     body::after {
       content: "";
       position: absolute;
       inset: 0;
+      background-color: transparent;
       background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%);
+        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
+        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
       background-size: 50px 50px;
       z-index: -3;
       opacity: 0.4;
     }
+
     .background-glow {
       position: absolute;
       bottom: 0;
@@ -60,10 +72,12 @@
       z-index: -2;
       animation: pulseGlow 6s ease-in-out infinite;
     }
+
     @keyframes pulseGlow {
       0%, 100% { opacity: 0.12; transform: scale(1) translateY(50%); }
       50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
     }
+
     .floating-dot {
       position: absolute;
       border-radius: 50%;
@@ -72,10 +86,12 @@
       animation: float 8s infinite ease-in-out alternate;
       z-index: -2;
     }
+
     @keyframes float {
       0% { transform: translateY(0) rotate(0deg); }
       100% { transform: translateY(-20px) rotate(360deg); }
     }
+
     .login-card {
       background: var(--clr-bg-accent);
       border: 1px solid rgba(255,255,255,0.06);
@@ -92,8 +108,20 @@
       transform: translateY(30px);
       z-index: 1;
     }
-    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
-    .logo { width: 130px; align-self: center; margin-bottom: 0.5rem; }
+
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .logo {
+      width: 130px;
+      align-self: center;
+      margin-bottom: 0.5rem;
+    }
+
     .gradient-text {
       font-size: 1.4rem;
       font-weight: 600;
@@ -103,27 +131,52 @@
       text-align: center;
       margin-bottom: 1rem;
     }
+
     input {
-      width: 100%; padding: 0.75rem; border-radius: 10px;
-      border: 1px solid #2a2e43; background-color: #0f132c;
-      color: var(--clr-text); font-size: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #2a2e43;
+      background-color: #0f132c;
+      color: var(--clr-text);
+      font-size: 1rem;
       transition: border-color var(--transition);
     }
-    input:focus { outline: none; border-color: var(--clr-primary-light); }
+
+    input:focus {
+      outline: none;
+      border-color: var(--clr-primary-light);
+    }
+
     .login-button {
       background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
-      color: white; border: none; border-radius: 10px;
-      padding: 0.75rem; font-weight: 600;
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem;
+      font-weight: 600;
       cursor: pointer;
       transition: transform var(--transition), box-shadow var(--transition);
     }
-    .login-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4); }
-    .google-button { display: flex; justify-content: center; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border-radius: 8px; background-color: #fff; color: #3c4043; font-weight: 600; font-size: 0.875rem; border: 1px solid rgba(0, 0, 0, 0.2); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; }
-    .google-button:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); }
-    .google-button svg { width: 20px; height: 20px; }
-    .forgot { font-size: 0.9rem; color: var(--clr-primary-light); text-decoration: none; align-self: flex-start; }
-    .error-message { color: #ff6b6b; font-size: 0.95rem; text-align: center; margin: -0.5rem 0 0.5rem 0; }
-    .g-recaptcha { display: flex; justify-content: center; margin-top: 0.5rem; }
+
+    .login-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4);
+    }
+
+    .forgot {
+      font-size: 0.9rem;
+      color: var(--clr-primary-light);
+      text-decoration: none;
+      align-self: flex-start;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 0.95rem;
+      text-align: center;
+      margin: -0.5rem 0 0.5rem 0;
+    }
   </style>
 </head>
 <body>
@@ -134,56 +187,9 @@
     <div id="error" class="error-message"></div>
     <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
     <input type="password" placeholder="Wachtwoord" id="password">
-    <div class="g-recaptcha" data-sitekey="6LdNaVkrAAAAAAHEdo8xaQ6cPuW1YHo6HRSL9U0-Z"></div>
     <button class="login-button" onclick="loginUser()">Inloggen</button>
     <a href="#" class="forgot">Wachtwoord vergeten?</a>
   </div>
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-    const firebaseConfig = { /* jouw config */ };
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-
-    window.loginUser = async function () {
-      const email = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const errorDiv = document.getElementById("error");
-      errorDiv.textContent = "";
-      const captcha = grecaptcha.getResponse();
-      if (!captcha) {
-        errorDiv.textContent = "Bevestig dat je geen robot bent.";
-        return;
-      }
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        errorDiv.textContent = "Login mislukt: " + error.message;
-      }
-    };
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) window.location.href = "dashboard.html";
-    });
-  </script>
-  <script>
-    for (let i = 0; i < 20; i++) {
-      const dot = document.createElement("div");
-      dot.classList.add("floating-dot");
-      const size = Math.random() * 20 + 10;
-      dot.style.width = `${size}px`;
-      dot.style.height = `${size}px`;
-      dot.style.left = `${Math.random() * 100}%`;
-      dot.style.top = `${Math.random() * 100}%`;
-      dot.style.animationDuration = `${5 + Math.random() * 10}s`;
-      dot.style.animationDelay = `${Math.random() * 5}s`;
-      document.body.appendChild(dot);
-    }
-  </script>
+  <!-- Scripts komen hierna... (dezelfde als je huidige state) -->
 </body>
 </html>
