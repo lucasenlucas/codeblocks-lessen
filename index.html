@@ -78,20 +78,6 @@
       50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
     }
 
-    .floating-dot {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(3px);
-      animation: float 8s infinite ease-in-out alternate;
-      z-index: -2;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(-20px) rotate(360deg); }
-    }
-
     .login-card {
       background: var(--clr-bg-accent);
       border: 1px solid rgba(255,255,255,0.06);
@@ -190,6 +176,48 @@
     <button class="login-button" onclick="loginUser()">Inloggen</button>
     <a href="#" class="forgot">Wachtwoord vergeten?</a>
   </div>
-  <!-- Scripts komen hierna... (dezelfde als je huidige state) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.appspot.com",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.loginUser = async function () {
+      const email = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        if (["auth/user-not-found", "auth/wrong-password"].includes(error.code)) {
+          errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
+        } else {
+          errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
+        }
+      }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "dashboard.html";
+      }
+    });
+  </script>
 </body>
 </html>
