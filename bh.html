@@ -1,257 +1,4 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Beheer - Codeblocks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
-  <style>
-    :root {
-      --clr-bg: #070a19;
-      --clr-bg-accent: #10152f;
-      --clr-primary: #7355ff;
-      --clr-primary-light: #a18bff;
-      --clr-danger: #ff4a4a;
-      --clr-text: #e7e9f7;
-      --clr-text-muted: #8a8fae;
-      --clr-card-bg: #11182f;
-      --clr-card-hover: #1d2542;
-      --radius: 1rem;
-      --transition: 220ms ease;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-    body {
-      font-family: "Inter", sans-serif;
-      background-color: var(--clr-bg);
-      color: var(--clr-text);
-      display: flex;
-      height: 100vh;
-      overflow: hidden;
-    }
-    .sidebar {
-      width: 220px;
-      background-color: var(--clr-bg-accent);
-      padding: 2rem 1rem;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-    .sidebar h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      color: var(--clr-primary);
-    }
-    .menu-item {
-      font-size: 1rem;
-      color: var(--clr-text);
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      transition: var(--transition);
-      cursor: pointer;
-      text-decoration: none;
-    }
-    .menu-item:hover {
-      background-color: var(--clr-primary);
-      color: #fff;
-    }
-    .menu-item:last-child {
-      background-color: var(--clr-danger);
-      color: #fff;
-    }
-    .main-content {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-    }
-    .section-title {
-      font-size: 2rem;
-      margin-bottom: 2rem;
-    }
-    .top-actions {
-      display: flex;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      margin-bottom: 2rem;
-    }
-    .top-actions button {
-      background: var(--clr-primary);
-      border: none;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      font-weight: 600;
-    }
-    .search input {
-      padding: 0.75rem;
-      border-radius: var(--radius);
-      border: none;
-      background-color: #0f132c;
-      color: white;
-      width: 250px;
-    }
-    .user-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-      gap: 1.5rem;
-    }
-    .user-card {
-      background: var(--clr-card-bg);
-      padding: 1rem;
-      border-radius: var(--radius);
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .user-card:hover {
-      background-color: var(--clr-card-hover);
-    }
-    .popup {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.6);
-      display: none;
-      justify-content: center;
-      align-items: center;
-      z-index: 1000;
-    }
-    .popup-content {
-      background: var(--clr-bg-accent);
-      padding: 2rem;
-      border-radius: var(--radius);
-      max-width: 500px;
-      width: 100%;
-    }
-    .popup-content h2 {
-      margin-top: 0;
-    }
-    .popup-content span[contenteditable] {
-      background-color: #0f132c;
-      padding: 0.3rem 0.5rem;
-      border-radius: var(--radius);
-      display: inline-block;
-      min-width: 80px;
-    }
-    .edit-icon {
-      margin-left: 0.5rem;
-      cursor: pointer;
-      color: var(--clr-primary-light);
-    }
-  </style>
-</head>
-<body>
-  <aside class="sidebar">
-    <h2>Codeblocks</h2>
-    <a class="menu-item" href="dashboard.html">Dashboard</a>
-    <a class="menu-item" href="profiel.html">Profiel</a>
-    <a class="menu-item" href="instellingen.html">Instellingen</a>
-    <div class="menu-item" id="logout">Log uit</div>
-  </aside>
-  <main class="main-content">
-    <h1 class="section-title">Beheer</h1>
-    <div class="top-actions">
-      <button onclick="addUser()">➕ Nieuwe Gebruiker</button>
-      <button onclick="addModule()">📦 Nieuwe Module</button>
-      <div class="search">
-        <input type="text" placeholder="Zoek gebruiker..." oninput="searchUsers(this.value)" />
-      </div>
-    </div>
-    <div class="user-grid" id="userGrid"></div>
-  </main>
-  <div class="popup" id="popup">
-    <div class="popup-content" id="popupContent"></div>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-auth.js";
-    import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.9.0/firebase-firestore.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
-      authDomain: "codeblocks-app.firebaseapp.com",
-      projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.firebasestorage.app",
-      messagingSenderId: "341679011888",
-      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return location.href = "index.html";
-      loadUsers();
-    });
-
-    async function loadUsers() {
-      const snapshot = await getDocs(collection(db, "users"));
-      const grid = document.getElementById("userGrid");
-      grid.innerHTML = "";
-      snapshot.forEach(docSnap => {
-        const data = docSnap.data();
-        const card = document.createElement("div");
-        card.className = "user-card";
-        card.innerHTML = `
-          <strong>${data.name || "Naamloos"}</strong>
-          <div>${data.role || "Gebruiker"}</div>
-        `;
-        card.onclick = () => openPopup(`
-          <h2>${data.name || "Naamloos"}</h2>
-          <div><strong>Naam:</strong> <span contenteditable="true">${data.name || ""}</span> <span class="edit-icon">✏️</span></div>
-          <div><strong>Organisatie:</strong> <span contenteditable="true">${data.organization || ""}</span> <span class="edit-icon">✏️</span></div>
-          <div><strong>Rol:</strong> <span contenteditable="true">${data.role || ""}</span> <span class="edit-icon">✏️</span></div>
-        `);
-        grid.appendChild(card);
-      });
-    }
-
-    function searchUsers(query) {
-      const cards = document.querySelectorAll(".user-card");
-      cards.forEach(card => {
-        const name = card.querySelector("strong")?.textContent.toLowerCase() || "";
-        const role = card.querySelector("div")?.textContent.toLowerCase() || "";
-        card.style.display = name.includes(query.toLowerCase()) || role.includes(query.toLowerCase()) ? "block" : "none";
-      });
-    }
-
-    function openPopup(content) {
-      document.getElementById("popupContent").innerHTML = content;
-      document.getElementById("popup").style.display = "flex";
-    }
-
-    document.getElementById("popup").addEventListener("click", (e) => {
-      if (e.target.id === "popup") e.target.style.display = "none";
-    });
-
-    document.getElementById("logout").addEventListener("click", () => {
-      signOut(auth).then(() => location.href = "index.html");
-    });
-
-    function addUser() {
-      const name = prompt("Naam van gebruiker:");
-      const organization = prompt("Organisatie:");
-      const role = prompt("Rol (user/admin):", "user");
-      const email = prompt("E-mail:");
-      alert("Gebruiker toevoegen is nog niet gekoppeld aan Firebase Auth. Volgende stap!");
-    }
-
-    function addModule() {
-      const title = prompt("Titel van module:");
-      const thumbnail = prompt("Link naar thumbnail:");
-      const url = prompt("Link naar module:");
-      const assignedTo = prompt("E-mail van gebruiker(s), komma-gescheiden:");
-      alert(`Module '${title}' wordt toegevoegd voor ${assignedTo}`);
-    }
-
+// Eventdelegatie voor edit-iconen in popup
     document.addEventListener("click", async (e) => {
       if (e.target.classList.contains("edit-icon")) {
         const container = e.target.parentElement;
@@ -267,12 +14,55 @@
         snapshot.forEach(async (docSnap) => {
           const data = docSnap.data();
           if (data.name === naam) {
-            await updateDoc(doc(db, "users", docSnap.id), { [updateKey]: nieuweWaarde });
+            const docRef = docSnap.ref;
+            await updateDoc(docRef, { [updateKey]: nieuweWaarde });
             alert(`${updateKey} bijgewerkt!`);
           }
         });
       }
     });
-  </script>
-</body>
-</html>
+
+// Nieuwe gebruiker toevoegen (Auth + Firestore)
+    async function addUser() {
+      const name = prompt("Naam van gebruiker:");
+      const organization = prompt("Organisatie:");
+      const role = prompt("Rol (user/admin):", "user");
+      const email = prompt("E-mail:");
+      const password = prompt("Wachtwoord:");
+      if (!name || !email || !password) return alert("Vul alle gegevens in.");
+
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, password);
+        await setDoc(doc(db, "users", cred.user.uid), {
+          name,
+          organization,
+          role,
+          email
+        });
+        alert("Gebruiker succesvol aangemaakt!");
+        loadUsers();
+      } catch (err) {
+        alert("Fout bij aanmaken: " + err.message);
+      }
+    }
+
+// Nieuwe module toevoegen aan Firestore
+    async function addModule() {
+      const title = prompt("Titel van module:");
+      const thumbnail = prompt("Link naar thumbnail:");
+      const url = prompt("Link naar module:");
+      const assignedTo = prompt("E-mail van gebruiker(s), komma-gescheiden:");
+      if (!title || !url || !assignedTo) return alert("Vul alle verplichte velden in.");
+
+      try {
+        await addDoc(collection(db, "modules"), {
+          title,
+          thumbnail,
+          url,
+          assignedTo: assignedTo.split(",").map(e => e.trim())
+        });
+        alert("Module toegevoegd!");
+      } catch (err) {
+        alert("Fout bij toevoegen module: " + err.message);
+      }
+    }
