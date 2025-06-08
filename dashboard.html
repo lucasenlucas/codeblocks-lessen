@@ -14,6 +14,8 @@
       --clr-danger: #ff4a4a;
       --clr-text: #e7e9f7;
       --clr-text-muted: #8a8fae;
+      --clr-card-bg: #11182f;
+      --clr-card-hover: #1d2542;
       --radius: 1rem;
       --transition: 220ms ease;
     }
@@ -32,17 +34,6 @@
       height: 100vh;
       overflow: hidden;
       position: relative;
-    }
-
-    body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
-      background-size: 50px 50px;
-      z-index: -1;
     }
 
     .sidebar {
@@ -96,6 +87,21 @@
       margin-bottom: 1.5rem;
     }
 
+    .search-bar {
+      margin-bottom: 2rem;
+      max-width: 500px;
+    }
+
+    .search-bar input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      border: none;
+      background-color: #0f132c;
+      color: var(--clr-text);
+      font-size: 1rem;
+    }
+
     .grid {
       display: grid;
       grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -103,16 +109,27 @@
     }
 
     .card {
-      background-color: var(--clr-bg-accent);
+      background-color: var(--clr-card-bg);
       padding: 1.5rem;
       border-radius: var(--radius);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
       transition: var(--transition);
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeInCard 0.5s ease forwards;
     }
 
     .card:hover {
       transform: translateY(-4px);
+      background-color: var(--clr-card-hover);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes fadeInCard {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
     .card-title {
@@ -145,9 +162,10 @@
 
   <main class="main-content">
     <h1 class="section-title" id="welcome-title">Jouw Modules</h1>
-    <div class="grid" id="module-list">
-      <!-- Dynamische content -->
+    <div class="search-bar">
+      <input type="text" id="search" placeholder="Zoek naar modules...">
     </div>
+    <div class="grid" id="module-list"></div>
   </main>
 
   <script type="module">
@@ -170,6 +188,8 @@
 
     const moduleList = document.getElementById("module-list");
     const welcomeTitle = document.getElementById("welcome-title");
+    const searchInput = document.getElementById("search");
+    let modulesData = [];
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return location.href = "index.html";
@@ -180,47 +200,58 @@
 
       const q = query(collection(db, "modules"), where("assignedTo", "array-contains", user.email));
       const snapshot = await getDocs(q);
+      modulesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      renderModules(modulesData);
+    });
 
-      if (snapshot.empty) {
+    function renderModules(data) {
+      moduleList.innerHTML = "";
+      if (!data.length) {
         moduleList.innerHTML = "<p style='color: var(--clr-text-muted); text-align: center;'>Geen modules gevonden.</p>";
-      } else {
-        snapshot.forEach((doc) => {
-          const data = doc.data();
-          const card = document.createElement("div");
-          card.className = "card";
-
-          if (data.thumbnail) {
-  const img = document.createElement("img");
-  img.src = data.thumbnail;
-  img.alt = data.title || "Module thumbnail";
-  img.style.width = "100%";
-  img.style.height = "160px";
-  img.style.objectFit = "cover";
-  img.style.borderRadius = "0.5rem";
-  img.style.marginBottom = "1rem";
-  card.appendChild(img);
-}
-
-const title = document.createElement("div");
-title.className = "card-title";
-title.textContent = data.title || "Naamloze module";
-
-          const subtitle = document.createElement("div");
-          subtitle.className = "card-subtitle";
-          subtitle.textContent = data.subtitle || "Codeblocks Lesmodule";
-
-          const link = document.createElement("a");
-          link.href = data.url || "#";
-          link.textContent = "Open module →";
-          link.target = "_blank";
-
-          card.appendChild(title);
-          card.appendChild(subtitle);
-          card.appendChild(link);
-
-          moduleList.appendChild(card);
-        });
+        return;
       }
+      data.forEach((module, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.style.animationDelay = `${index * 0.05}s`;
+
+        if (module.thumbnail) {
+          const img = document.createElement("img");
+          img.src = module.thumbnail;
+          img.alt = module.title || "Module thumbnail";
+          img.style.width = "100%";
+          img.style.height = "160px";
+          img.style.objectFit = "cover";
+          img.style.borderRadius = "0.5rem";
+          img.style.marginBottom = "1rem";
+          card.appendChild(img);
+        }
+
+        const title = document.createElement("div");
+        title.className = "card-title";
+        title.textContent = module.title || "Naamloze module";
+
+        const subtitle = document.createElement("div");
+        subtitle.className = "card-subtitle";
+        subtitle.textContent = module.subtitle || "Codeblocks Lesmodule";
+
+        const link = document.createElement("a");
+        link.href = module.url || "#";
+        link.textContent = "Open module →";
+        link.target = "_blank";
+
+        card.appendChild(title);
+        card.appendChild(subtitle);
+        card.appendChild(link);
+
+        moduleList.appendChild(card);
+      });
+    }
+
+    searchInput.addEventListener("input", () => {
+      const term = searchInput.value.toLowerCase();
+      const filtered = modulesData.filter(mod => mod.title?.toLowerCase().includes(term));
+      renderModules(filtered);
     });
   </script>
 </body>
