@@ -6,20 +6,93 @@
   <title>Inloggen - Codeblocks</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
-    /* [CSS unchanged, retained from current state] */
+    :root {
+      --clr-bg: #070a19;
+      --clr-bg-accent: #10152f;
+      --clr-primary: #7355ff;
+      --clr-primary-light: #a18bff;
+      --clr-text: #e7e9f7;
+      --clr-text-muted: #8a8fae;
+      --radius: 1rem;
+      --transition: 220ms ease;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: var(--clr-bg);
+      color: var(--clr-text);
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
+      position: relative;
+    }
+    body::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, #10152f 0%, #070a19 100%);
+      z-index: -4;
+    }
+    .login-card {
+      background: var(--clr-bg-accent);
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      width: 90%;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      z-index: 1;
+    }
+    .logo {
+      width: 130px;
+      align-self: center;
+    }
+    .gradient-text {
+      font-size: 1.4rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #2a2e43;
+      background-color: #0f132c;
+      color: var(--clr-text);
+    }
+    .login-button {
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
+      color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .error-message {
+      color: #ff6b6b;
+      font-size: 0.95rem;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-  <div class="background-glow"></div>
   <div class="login-card">
     <img src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks logo" class="logo">
     <h2 class="gradient-text">Inloggen bij Codeblocks</h2>
     <div id="error" class="error-message"></div>
-    <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
+    <input type="email" placeholder="E-mail" id="username">
     <input type="password" placeholder="Wachtwoord" id="password">
     <button class="login-button" onclick="loginUser()">Inloggen</button>
-    <a href="#" class="forgot">Wachtwoord vergeten?</a>
   </div>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
@@ -32,8 +105,7 @@
       doc,
       getDoc,
       setDoc,
-      updateDoc,
-      serverTimestamp
+      updateDoc
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
@@ -49,61 +121,47 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    async function loginUser() {
-      const email = document.getElementById("username").value;
+    window.loginUser = async function () {
+      const email = document.getElementById("username").value.toLowerCase();
       const password = document.getElementById("password").value;
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
 
-      const userRef = doc(db, "users", email);
-      const docSnap = await getDoc(userRef);
+      const userDocRef = doc(db, "users", email);
+      const userDoc = await getDoc(userDocRef);
 
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        const now = Date.now();
+      let data = userDoc.exists() ? userDoc.data() : { loginAttempts: 0, isBlocked: false };
 
-        if (data.isBlocked) {
-          errorDiv.textContent = "Account is geblokkeerd. Neem contact op met de beheerder.";
-          return;
-        }
+      if (data.isBlocked) {
+        errorDiv.textContent = "Account is geblokkeerd. Neem contact op met een beheerder.";
+        return;
+      }
 
-        if (data.blockedUntil && now < data.blockedUntil.toMillis()) {
-          errorDiv.textContent = `Account tijdelijk geblokkeerd. Probeer opnieuw om ${new Date(data.blockedUntil.toMillis()).toLocaleTimeString()}`;
-          return;
-        }
+      const now = Date.now();
+      if (data.blockedUntil && now < data.blockedUntil) {
+        const wait = Math.ceil((data.blockedUntil - now) / 1000);
+        errorDiv.textContent = `Probeer het over ${wait} seconden opnieuw.`;
+        return;
       }
 
       try {
         await signInWithEmailAndPassword(auth, email, password);
-        await updateDoc(userRef, { loginAttempts: 0 });
+        await setDoc(userDocRef, { loginAttempts: 0, isBlocked: false }, { merge: true });
       } catch (error) {
-        if (["auth/user-not-found", "auth/wrong-password"].includes(error.code)) {
-          const attempts = docSnap.exists() && docSnap.data().loginAttempts ? docSnap.data().loginAttempts + 1 : 1;
-          const updates = { loginAttempts: attempts };
+        let newAttempts = (data.loginAttempts || 0) + 1;
+        let updateData = { loginAttempts: newAttempts };
 
-          if (attempts % 3 === 0 && attempts < 10) {
-            updates.blockedUntil = new Date(Date.now() + 60000);
-          } else if (attempts >= 10) {
-            updates.isBlocked = true;
-          }
-
-          await setDoc(userRef, { ...updates }, { merge: true });
-
-          if (updates.isBlocked) {
-            errorDiv.textContent = "Account is geblokkeerd wegens te veel foute pogingen.";
-          } else if (updates.blockedUntil) {
-            errorDiv.textContent = `Account tijdelijk geblokkeerd. Probeer opnieuw om ${new Date(updates.blockedUntil).toLocaleTimeString()}`;
-          } else {
-            errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
-          }
-
-        } else {
-          errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
+        if (newAttempts % 3 === 0 && newAttempts < 10) {
+          updateData.blockedUntil = now + 60000;
+        } else if (newAttempts >= 10) {
+          updateData.isBlocked = true;
         }
-      }
-    }
 
-    window.loginUser = loginUser;
+        await setDoc(userDocRef, updateData, { merge: true });
+
+        errorDiv.textContent = "Ongeldige login. Poging " + newAttempts + "/10";
+      }
+    };
 
     onAuthStateChanged(auth, (user) => {
       if (user) {
