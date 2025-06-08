@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Inloggen - Codeblocks</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+  <script src="https://www.google.com/recaptcha/api.js" async defer></script>
   <style>
     :root {
       --clr-bg: #070a19;
@@ -16,17 +17,8 @@
       --radius: 1rem;
       --transition: 220ms ease;
     }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    html {
-      scroll-behavior: smooth;
-    }
-
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
     body {
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
@@ -38,7 +30,6 @@
       overflow: hidden;
       position: relative;
     }
-
     body::before {
       content: "";
       position: absolute;
@@ -46,20 +37,17 @@
       background: radial-gradient(ellipse at center, #10152f 0%, #070a19 100%);
       z-index: -4;
     }
-
     body::after {
       content: "";
       position: absolute;
       inset: 0;
-      background-color: transparent;
       background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
+        linear-gradient(0deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%),
+        linear-gradient(90deg, transparent 24%, rgba(255,255,255,0.02) 25%, rgba(255,255,255,0.02) 26%, transparent 27%);
       background-size: 50px 50px;
       z-index: -3;
       opacity: 0.4;
     }
-
     .background-glow {
       position: absolute;
       bottom: 0;
@@ -72,12 +60,10 @@
       z-index: -2;
       animation: pulseGlow 6s ease-in-out infinite;
     }
-
     @keyframes pulseGlow {
       0%, 100% { opacity: 0.12; transform: scale(1) translateY(50%); }
       50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
     }
-
     .floating-dot {
       position: absolute;
       border-radius: 50%;
@@ -86,12 +72,10 @@
       animation: float 8s infinite ease-in-out alternate;
       z-index: -2;
     }
-
     @keyframes float {
       0% { transform: translateY(0) rotate(0deg); }
       100% { transform: translateY(-20px) rotate(360deg); }
     }
-
     .login-card {
       background: var(--clr-bg-accent);
       border: 1px solid rgba(255,255,255,0.06);
@@ -108,20 +92,8 @@
       transform: translateY(30px);
       z-index: 1;
     }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .logo {
-      width: 130px;
-      align-self: center;
-      margin-bottom: 0.5rem;
-    }
-
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+    .logo { width: 130px; align-self: center; margin-bottom: 0.5rem; }
     .gradient-text {
       font-size: 1.4rem;
       font-weight: 600;
@@ -131,121 +103,50 @@
       text-align: center;
       margin-bottom: 1rem;
     }
-
     input {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 10px;
-      border: 1px solid #2a2e43;
-      background-color: #0f132c;
-      color: var(--clr-text);
-      font-size: 1rem;
+      width: 100%; padding: 0.75rem; border-radius: 10px;
+      border: 1px solid #2a2e43; background-color: #0f132c;
+      color: var(--clr-text); font-size: 1rem;
       transition: border-color var(--transition);
     }
-
-    input:focus {
-      outline: none;
-      border-color: var(--clr-primary-light);
-    }
-
+    input:focus { outline: none; border-color: var(--clr-primary-light); }
     .login-button {
       background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 0.75rem;
-      font-weight: 600;
+      color: white; border: none; border-radius: 10px;
+      padding: 0.75rem; font-weight: 600;
       cursor: pointer;
       transition: transform var(--transition), box-shadow var(--transition);
     }
-
-    .login-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4);
-    }
-
-    .google-button {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      background-color: #fff;
-      color: #3c4043;
-      font-weight: 600;
-      font-size: 0.875rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .google-button:hover {
-      transform: scale(1.02);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .google-button svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .forgot {
-      font-size: 0.9rem;
-      color: var(--clr-primary-light);
-      text-decoration: none;
-      align-self: flex-start;
-    }
-
-    .error-message {
-      color: #ff6b6b;
-      font-size: 0.95rem;
-      text-align: center;
-      margin: -0.5rem 0 0.5rem 0;
-    }
+    .login-button:hover { transform: translateY(-2px); box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4); }
+    .google-button { display: flex; justify-content: center; align-items: center; gap: 0.6rem; padding: 0.6rem 1rem; border-radius: 8px; background-color: #fff; color: #3c4043; font-weight: 600; font-size: 0.875rem; border: 1px solid rgba(0, 0, 0, 0.2); cursor: pointer; transition: transform 0.3s ease, box-shadow 0.3s ease; }
+    .google-button:hover { transform: scale(1.02); box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15); }
+    .google-button svg { width: 20px; height: 20px; }
+    .forgot { font-size: 0.9rem; color: var(--clr-primary-light); text-decoration: none; align-self: flex-start; }
+    .error-message { color: #ff6b6b; font-size: 0.95rem; text-align: center; margin: -0.5rem 0 0.5rem 0; }
+    .g-recaptcha { display: flex; justify-content: center; margin-top: 0.5rem; }
   </style>
 </head>
 <body>
   <div class="background-glow"></div>
-
   <div class="login-card">
     <img src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks logo" class="logo">
     <h2 class="gradient-text">Inloggen bij Codeblocks</h2>
     <div id="error" class="error-message"></div>
     <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
     <input type="password" placeholder="Wachtwoord" id="password">
+    <div class="g-recaptcha" data-sitekey="6LdNaVkrAAAAAAHEdo8xaQ6cPuW1YHo6HRSL9U0-Z"></div>
     <button class="login-button" onclick="loginUser()">Inloggen</button>
-    <button class="google-button" onclick= *hier moet je login with google zetten zodra open* ()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262" preserveAspectRatio="xMidYMid meet">
-        <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/>
-        <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/>
-        <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"/>
-        <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/>
-      </svg>
-      Continue with Google (google portaal nog niet open)
-    </button>
     <a href="#" class="forgot">Wachtwoord vergeten?</a>
   </div>
-
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
       getAuth,
       signInWithEmailAndPassword,
-      onAuthStateChanged,
-      GoogleAuthProvider,
-      signInWithPopup
+      onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
-      authDomain: "codeblocks-app.firebaseapp.com",
-      projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.firebasestorage.app",
-      messagingSenderId: "341679011888",
-      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
-    };
-
+    const firebaseConfig = { /* jouw config */ };
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
 
@@ -254,43 +155,22 @@
       const password = document.getElementById("password").value;
       const errorDiv = document.getElementById("error");
       errorDiv.textContent = "";
-
+      const captcha = grecaptcha.getResponse();
+      if (!captcha) {
+        errorDiv.textContent = "Bevestig dat je geen robot bent.";
+        return;
+      }
       try {
         await signInWithEmailAndPassword(auth, email, password);
       } catch (error) {
-        handleAuthError(error.code);
+        errorDiv.textContent = "Login mislukt: " + error.message;
       }
     };
-
-    window.loginWithGoogle = async function () {
-      const provider = new GoogleAuthProvider();
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        document.getElementById("error").textContent = "Google login mislukt: " + error.message;
-      }
-    };
-
-    function handleAuthError(code) {
-      const errorDiv = document.getElementById("error");
-      if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-email", "auth/missing-password"].includes(code)) {
-        errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
-      } else if (code === "auth/email-already-in-use") {
-        errorDiv.textContent = "Dit e-mailadres is al in gebruik.";
-      } else if (code === "auth/weak-password") {
-        errorDiv.textContent = "Gebruik een sterker wachtwoord (minimaal 6 tekens).";
-      } else {
-        errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
-      }
-    }
 
     onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = "dashboard.html";
-      }
+      if (user) window.location.href = "dashboard.html";
     });
   </script>
-
   <script>
     for (let i = 0; i < 20; i++) {
       const dot = document.createElement("div");
