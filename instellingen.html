@@ -14,6 +14,8 @@
       --clr-danger: #ff4a4a;
       --clr-text: #e7e9f7;
       --clr-text-muted: #8a8fae;
+      --clr-card-bg: #11182f;
+      --clr-card-hover: #1d2542;
       --radius: 1rem;
       --transition: 220ms ease;
     }
@@ -32,17 +34,6 @@
       height: 100vh;
       overflow: hidden;
       position: relative;
-    }
-
-    body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
-      background-size: 50px 50px;
-      z-index: -1;
     }
 
     .sidebar {
@@ -116,8 +107,8 @@
       margin-bottom: 0.5rem;
     }
 
-    .setting-row input[type="text"],
-    .setting-row input[type="email"] {
+    .setting-row input,
+    .setting-row select {
       width: 100%;
       padding: 0.75rem;
       border-radius: var(--radius);
@@ -135,6 +126,13 @@
       font-weight: 600;
       cursor: pointer;
     }
+
+    #save-popup {
+      text-align: center;
+      margin-top: 1rem;
+      color: var(--clr-primary-light);
+      font-weight: 600;
+    }
   </style>
 </head>
 <body>
@@ -143,35 +141,36 @@
     <a class="menu-item" href="dashboard.html">Dashboard</a>
     <a class="menu-item" href="profiel.html">Profiel</a>
     <a class="menu-item" href="instellingen.html">Instellingen</a>
-    <div class="menu-item">Log uit</div>
+    <div class="menu-item" id="logout">Log uit</div>
   </aside>
 
   <main class="main-content">
     <h1 class="section-title">Instellingen</h1>
     <div class="settings-block">
       <div class="setting-row">
-        <label for="naam">Naam</label>
-        <input type="text" id="naam" disabled />
-      </div>
-      <div class="setting-row">
-        <label for="school">School/Organisatie</label>
-        <input type="text" id="school" disabled />
-      </div>
-      <div class="setting-row">
         <label for="email">E-mailadres aanpassen</label>
         <input type="email" id="email" placeholder="Nieuw e-mailadres invoeren...">
       </div>
+
       <div class="setting-row">
-        <button onclick="updateUserData()">Wijzigingen opslaan</button>
+        <label for="theme">Thema</label>
+        <select id="theme" onchange="updateTheme()">
+          <option value="dark">Donker</option>
+          <option value="light">Licht</option>
+        </select>
       </div>
+
+      <div class="setting-row">
+        <button onclick="saveSettings()">Wijzigingen opslaan</button>
+      </div>
+
+      <div id="save-popup" style="display: none;">Wijzigingen opgeslagen!</div>
     </div>
-    <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Wijzigingen opgeslagen!</div>
   </main>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -184,70 +183,64 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
-    const db = getFirestore(app);
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return location.href = "index.html";
-
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        document.getElementById("naam").value = data.name || "";
-        document.getElementById("school").value = data.organization || "";
-        document.getElementById("email").value = user.email || "";
-
-        if (data.role === "admin") {
-          document.getElementById("naam").disabled = false;
-          document.getElementById("school").disabled = false;
-        }
-      }
+      document.getElementById("email").value = user.email || "";
     });
 
-    window.updateUserData = async function () {
-      const user = auth.currentUser;
-      if (!user) return;
-
-      const naam = document.getElementById("naam").value;
-      const school = document.getElementById("school").value;
-      const email = document.getElementById("email").value;
-
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists() && docSnap.data().role === "admin") {
-        await setDoc(docRef, {
-          name: naam,
-          organization: school,
-          role: docSnap.data().role
-        }, { merge: true });
-      }
-
-      if (email && email !== user.email) {
-        user.updateEmail(email).then(() => {
-          showPopup("E-mailadres gewijzigd (indien toegestaan). Je moet mogelijk opnieuw inloggen.");
-        }).catch((error) => {
-          showPopup("E-mailadres wijzigen mislukt: " + error.message);
-        });
+    window.saveSettings = () => {
+      const emailInput = document.getElementById("email").value;
+      if (emailInput) {
+        auth.currentUser.updateEmail(emailInput)
+          .then(() => showPopup("E-mailadres gewijzigd."))
+          .catch(err => showPopup("Fout: " + err.message));
       } else {
-        showPopup("Wijzigingen opgeslagen!");
+        showPopup("Geen wijzigingen.");
       }
     };
 
-    function showPopup(message) {
+    function showPopup(msg) {
       const popup = document.getElementById("save-popup");
-      popup.textContent = message;
+      popup.textContent = msg;
       popup.style.display = "block";
-      setTimeout(() => {
-        popup.style.display = "none";
-      }, 3000);
+      setTimeout(() => popup.style.display = "none", 3000);
     }
 
-    const logoutBtn = document.querySelector('.menu-item:last-child');
-    logoutBtn.addEventListener('click', () => {
-      auth.signOut().then(() => {
-        location.href = 'index.html';
-      });
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => location.href = "index.html");
     });
+
+    // Thema-functionaliteit
+    const themeSelect = document.getElementById("theme");
+    const root = document.documentElement;
+    const savedTheme = localStorage.getItem("theme") || "dark";
+    themeSelect.value = savedTheme;
+    applyTheme(savedTheme);
+
+    window.updateTheme = () => {
+      const theme = themeSelect.value;
+      localStorage.setItem("theme", theme);
+      applyTheme(theme);
+    };
+
+    function applyTheme(theme) {
+      if (theme === "light") {
+        root.style.setProperty("--clr-bg", "#ffffff");
+        root.style.setProperty("--clr-bg-accent", "#f0f0f0");
+        root.style.setProperty("--clr-text", "#1f1f1f");
+        root.style.setProperty("--clr-text-muted", "#6c6c6c");
+        root.style.setProperty("--clr-card-bg", "#ffffff");
+        root.style.setProperty("--clr-card-hover", "#e6e6e6");
+      } else {
+        root.style.setProperty("--clr-bg", "#070a19");
+        root.style.setProperty("--clr-bg-accent", "#10152f");
+        root.style.setProperty("--clr-text", "#e7e9f7");
+        root.style.setProperty("--clr-text-muted", "#8a8fae");
+        root.style.setProperty("--clr-card-bg", "#11182f");
+        root.style.setProperty("--clr-card-hover", "#1d2542");
+      }
+    }
   </script>
 </body>
 </html>
