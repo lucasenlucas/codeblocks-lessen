@@ -150,22 +150,18 @@
     <h1 class="section-title">Instellingen</h1>
     <div class="settings-block">
       <div class="setting-row">
-        <label for="naam">Naam</label>
-        <input type="text" id="naam" disabled />
+        <label for="phone">Telefoonnummer (voor 2FA)</label>
+        <input type="text" id="phone" placeholder="+316..." />
       </div>
       <div class="setting-row">
-        <label for="school">School/Organisatie</label>
-        <input type="text" id="school" disabled />
+        <label for="2fa-toggle">Twee-factor authenticatie</label>
+        <input type="checkbox" id="2fa-toggle" /> 2FA aanzetten
       </div>
       <div class="setting-row">
-        <label for="email">E-mailadres aanpassen</label>
-        <input type="email" id="email" placeholder="Nieuw e-mailadres invoeren...">
-      </div>
-      <div class="setting-row">
-        <button onclick="updateUserData()">Wijzigingen opslaan</button>
+        <button onclick="update2FA()">Instellingen opslaan</button>
       </div>
     </div>
-    <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Wijzigingen opgeslagen!</div>
+    <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Instellingen opgeslagen!</div>
   </main>
 
   <script type="module">
@@ -173,77 +169,45 @@
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
     import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    const firebaseConfig = {
+    const app = initializeApp({
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
-      projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.firebasestorage.app",
-      messagingSenderId: "341679011888",
-      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
-    };
+      projectId: "codeblocks-app"
+    });
 
-    const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const db = getFirestore(app);
 
+    let currentUID = null;
+
     onAuthStateChanged(auth, async (user) => {
       if (!user) return location.href = "index.html";
+      currentUID = user.uid;
 
-      const docSnap = await getDoc(doc(db, "users", user.uid));
-      if (docSnap.exists()) {
-        const data = docSnap.data();
-        document.getElementById("naam").value = data.name || "";
-        document.getElementById("school").value = data.organization || "";
-        document.getElementById("email").value = user.email || "";
-
-        if (data.role === "admin") {
-          document.getElementById("naam").disabled = false;
-          document.getElementById("school").disabled = false;
-        }
+      const snap = await getDoc(doc(db, "users", user.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        document.getElementById("phone").value = data.phone || "";
+        document.getElementById("2fa-toggle").checked = data.mfaEnabled === true;
       }
     });
 
-    window.updateUserData = async function () {
-      const user = auth.currentUser;
-      if (!user) return;
+    window.update2FA = async () => {
+      const phone = document.getElementById("phone").value;
+      const mfaEnabled = document.getElementById("2fa-toggle").checked;
+      if (!currentUID) return;
 
-      const naam = document.getElementById("naam").value;
-      const school = document.getElementById("school").value;
-      const email = document.getElementById("email").value;
+      await setDoc(doc(db, "users", currentUID), {
+        phone,
+        mfaEnabled
+      }, { merge: true });
 
-      const docRef = doc(db, "users", user.uid);
-      const docSnap = await getDoc(docRef);
-
-      if (docSnap.exists() && docSnap.data().role === "admin") {
-        await setDoc(docRef, {
-          name: naam,
-          organization: school,
-          role: docSnap.data().role
-        }, { merge: true });
-      }
-
-      if (email && email !== user.email) {
-        user.updateEmail(email).then(() => {
-          showPopup("E-mailadres gewijzigd (indien toegestaan). Je moet mogelijk opnieuw inloggen.");
-        }).catch((error) => {
-          showPopup("E-mailadres wijzigen mislukt: " + error.message);
-        });
-      } else {
-        showPopup("Wijzigingen opgeslagen!");
-      }
+      const popup = document.getElementById("save-popup");
+      popup.style.display = "block";
+      setTimeout(() => popup.style.display = "none", 3000);
     };
 
-    function showPopup(message) {
-      const popup = document.getElementById("save-popup");
-      popup.textContent = message;
-      popup.style.display = "block";
-      setTimeout(() => {
-        popup.style.display = "none";
-      }, 3000);
-    }
-
-    const logoutBtn = document.querySelector('.menu-item:last-child');
-    logoutBtn.addEventListener('click', () => {
+    document.querySelector('.menu-item:last-child').addEventListener('click', () => {
       auth.signOut().then(() => {
         location.href = 'index.html';
       });
