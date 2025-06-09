@@ -302,6 +302,32 @@
         document.getElementById("error").textContent = "Google login mislukt: " + error.message;
       }
     };
+    } catch (error) {
+  if (error.code === 'auth/multi-factor-auth-required') {
+    const resolver = getMultiFactorResolver(auth, error);
+    if (!resolver || !resolver.hints || resolver.hints.length === 0) {
+      alert("Er is een probleem met de 2FA instellingen. Neem contact op met de beheerder.");
+      return;
+    }
+
+    const phoneInfoOptions = {
+      multiFactorHint: resolver.hints[0],
+      session: resolver.session,
+    };
+
+    const phoneAuthProvider = new PhoneAuthProvider(auth);
+    const verificationId = await phoneAuthProvider.verifyPhoneNumber(phoneInfoOptions, window.recaptchaVerifier);
+    
+    const verificationCode = prompt('Voer de SMS-code in die je hebt ontvangen:');
+    const cred = PhoneAuthProvider.credential(verificationId, verificationCode);
+    const multiFactorAssertion = multiFactor. PhoneMultiFactorGenerator.assertion(cred);
+    
+    await resolver.resolveSignIn(multiFactorAssertion);
+    location.href = "dashboard.html";
+  } else {
+    alert("Login mislukt: " + error.message);
+  }
+}
   </script>
 
   <script>
