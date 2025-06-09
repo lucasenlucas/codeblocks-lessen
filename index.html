@@ -215,27 +215,29 @@
     <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
     <input type="password" placeholder="Wachtwoord" id="password">
     <button class="login-button" onclick="loginUser()">Inloggen</button>
-    <button class="google-button" onclick= *hier moet je login with google zetten zodra open* ()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262" preserveAspectRatio="xMidYMid meet">
-        <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/>
-        <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/>
-        <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"/>
-        <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/>
-      </svg>
-      Continue with Google (google portaal nog niet open)
-    </button>
     <a href="#" class="forgot">Wachtwoord vergeten?</a>
+  </div> 
+  <div id="mfa-container" style="display:none;">
+    <input type="tel" id="phone" placeholder="Telefoonnummer">
+    <div id="recaptcha-container" style="margin-top: 0.5rem;"></div>
+    <button class="login-button" onclick="sendVerificationCode()">Stuur SMS-code</button>
+    <div id="code-container" style="display:none">
+      <input type="text" id="sms-code" placeholder="Verificatiecode">
+      <button class="login-button" onclick="verifyCode()">Verifieer</button>
+    </div>
   </div>
+  
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      GoogleAuthProvider,
-      signInWithPopup
+      getAuth, signInWithEmailAndPassword, RecaptchaVerifier,
+      PhoneAuthProvider, getMultiFactorResolver, PhoneMultiFactorGenerator,
+      GoogleAuthProvider, signInWithPopup
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore, doc, getDoc
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -248,6 +250,8 @@
 
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
+    let resolver, verificationId;
 
     window.loginUser = async function () {
       const email = document.getElementById("username").value;
@@ -256,39 +260,48 @@
       errorDiv.textContent = "";
 
       try {
-        await signInWithEmailAndPassword(auth, email, password);
+        const cred = await signInWithEmailAndPassword(auth, email, password);
+        const uid = cred.user.uid;
+        const userDoc = await getDoc(doc(db, "users", uid));
+        const mfaEnabled = userDoc.exists() && userDoc.data().mfaEnabled === true;
+
+        if (mfaEnabled) {
+          resolver = await getMultiFactorResolver(auth, { user: cred.user });
+          document.getElementById("mfa-container").style.display = "block";
+          window.recaptchaVerifier = new RecaptchaVerifier("recaptcha-container", { size: "normal" }, auth);
+        } else {
+          window.location.href = "dashboard.html";
+        }
       } catch (error) {
-        handleAuthError(error.code);
+        errorDiv.textContent = error.message;
       }
+    };
+
+    window.sendVerificationCode = async function () {
+      const phoneNumber = document.getElementById("phone").value;
+      const session = resolver.session;
+      const phoneAuthProvider = new PhoneAuthProvider(auth);
+      verificationId = await phoneAuthProvider.verifyPhoneNumber({ phoneNumber, session }, window.recaptchaVerifier);
+      document.getElementById("code-container").style.display = "block";
+    };
+
+    window.verifyCode = async function () {
+      const code = document.getElementById("sms-code").value;
+      const cred = PhoneAuthProvider.credential(verificationId, code);
+      const multiFactorAssertion = PhoneMultiFactorGenerator.assertion(cred);
+      await resolver.resolveSignIn(multiFactorAssertion);
+      window.location.href = "dashboard.html";
     };
 
     window.loginWithGoogle = async function () {
       const provider = new GoogleAuthProvider();
       try {
         await signInWithPopup(auth, provider);
+        window.location.href = "dashboard.html";
       } catch (error) {
         document.getElementById("error").textContent = "Google login mislukt: " + error.message;
       }
     };
-
-    function handleAuthError(code) {
-      const errorDiv = document.getElementById("error");
-      if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-email", "auth/missing-password"].includes(code)) {
-        errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
-      } else if (code === "auth/email-already-in-use") {
-        errorDiv.textContent = "Dit e-mailadres is al in gebruik.";
-      } else if (code === "auth/weak-password") {
-        errorDiv.textContent = "Gebruik een sterker wachtwoord (minimaal 6 tekens).";
-      } else {
-        errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
-      }
-    }
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        window.location.href = "dashboard.html";
-      }
-    });
   </script>
 
   <script>
