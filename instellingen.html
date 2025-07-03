@@ -2,16 +2,15 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Instellingen - Codeblocks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Inloggen - Codeblocks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --clr-bg: #070a19;
       --clr-bg-accent: #10152f;
       --clr-primary: #7355ff;
       --clr-primary-light: #a18bff;
-      --clr-danger: #ff4a4a;
       --clr-text: #e7e9f7;
       --clr-text-muted: #8a8fae;
       --radius: 1rem;
@@ -24,12 +23,18 @@
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
       color: var(--clr-text);
-      display: flex;
       height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
       overflow: hidden;
       position: relative;
     }
@@ -38,180 +43,267 @@
       content: "";
       position: absolute;
       inset: 0;
+      background: radial-gradient(ellipse at center, #10152f 0%, #070a19 100%);
+      z-index: -4;
+    }
+
+    body::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-color: transparent;
       background-image:
         linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
         linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
       background-size: 50px 50px;
-      z-index: -1;
+      z-index: -3;
+      opacity: 0.4;
     }
 
-    .sidebar {
-      width: 220px;
-      background-color: var(--clr-bg-accent);
-      padding: 2rem 1rem;
+    .background-glow {
+      position: absolute;
+      bottom: 0;
+      width: 600px;
+      height: 600px;
+      background: radial-gradient(circle, var(--clr-primary-light) 0%, transparent 60%);
+      opacity: 0.15;
+      filter: blur(60px);
+      transform: translateY(50%);
+      z-index: -2;
+      animation: pulseGlow 6s ease-in-out infinite;
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { opacity: 0.12; transform: scale(1) translateY(50%); }
+      50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
+    }
+
+    .floating-dot {
+      position: absolute;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.05);
+      backdrop-filter: blur(3px);
+      animation: float 8s infinite ease-in-out alternate;
+      z-index: -2;
+    }
+
+    @keyframes float {
+      0% { transform: translateY(0) rotate(0deg); }
+      100% { transform: translateY(-20px) rotate(360deg); }
+    }
+
+    .login-card {
+      background: var(--clr-bg-accent);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 2.5rem;
+      border-radius: var(--radius);
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
+      width: 90%;
+      max-width: 400px;
       display: flex;
       flex-direction: column;
       gap: 1rem;
-      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      animation: fadeIn 0.8s ease forwards;
+      opacity: 0;
+      transform: translateY(30px);
+      z-index: 1;
     }
 
-    .sidebar h2 {
-      font-size: 1.4rem;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      color: var(--clr-primary);
+    @keyframes fadeIn {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
     }
 
-    .menu-item {
-      font-size: 1rem;
-      color: var(--clr-text);
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius);
-      transition: var(--transition);
-      cursor: pointer;
-      text-decoration: none;
-    }
-
-    .menu-item:hover {
-      background-color: var(--clr-primary);
-      color: #fff;
-    }
-
-    .menu-item:last-child {
-      background-color: var(--clr-danger);
-      color: #fff;
-    }
-
-    .menu-item:last-child:hover {
-      background-color: #e63939;
-    }
-
-    .main-content {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-    }
-
-    .section-title {
-      font-size: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .settings-block {
-      background-color: var(--clr-bg-accent);
-      padding: 2rem;
-      border-radius: var(--radius);
-      max-width: 600px;
-      margin: auto;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-    }
-
-    .setting-row {
-      margin-bottom: 1.5rem;
-    }
-
-    .setting-row label {
-      display: block;
-      font-weight: 600;
+    .logo {
+      width: 130px;
+      align-self: center;
       margin-bottom: 0.5rem;
     }
 
-    .setting-row input[type="text"],
-    .setting-row input[type="email"] {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: var(--radius);
-      border: none;
-      background-color: #0f132c;
-      color: var(--clr-text);
+    .gradient-text {
+      font-size: 1.4rem;
+      font-weight: 600;
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-align: center;
+      margin-bottom: 1rem;
     }
 
-    .setting-row button {
-      padding: 0.75rem 1.5rem;
-      background: var(--clr-primary);
-      border: none;
-      border-radius: var(--radius);
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border-radius: 10px;
+      border: 1px solid #2a2e43;
+      background-color: #0f132c;
+      color: var(--clr-text);
+      font-size: 1rem;
+      transition: border-color var(--transition);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--clr-primary-light);
+    }
+
+    .login-button {
+      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
       color: white;
+      border: none;
+      border-radius: 10px;
+      padding: 0.75rem;
       font-weight: 600;
       cursor: pointer;
+      transition: transform var(--transition), box-shadow var(--transition);
+    }
+
+    .login-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4);
+    }
+
+    .google-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.6rem 1rem;
+      border-radius: 8px;
+      background-color: #fff;
+      color: #3c4043;
+      font-weight: 600;
+      font-size: 0.875rem;
+      border: 1px solid rgba(0, 0, 0, 0.2);
+      cursor: pointer;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .google-button:hover {
+      transform: scale(1.02);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+    }
+
+    .google-button svg {
+      width: 20px;
+      height: 20px;
+    }
+
+    .forgot {
+      font-size: 0.9rem;
+      color: var(--clr-primary-light);
+      text-decoration: none;
+      align-self: flex-start;
+    }
+
+    .error-message {
+      color: #ff6b6b;
+      font-size: 0.95rem;
+      text-align: center;
+      margin: -0.5rem 0 0.5rem 0;
     }
   </style>
 </head>
 <body>
-  <aside class="sidebar">
-    <h2>Codeblocks</h2>
-    <a class="menu-item" href="dashboard.html">Dashboard</a>
-    <a class="menu-item" href="profiel.html">Profiel</a>
-    <a class="menu-item" href="instellingen.html">Instellingen</a>
-    <div class="menu-item">Log uit</div>
-  </aside>
+  <div class="background-glow"></div>
 
-  <main class="main-content">
-    <h1 class="section-title">Instellingen</h1>
-    <div class="settings-block">
-      <div class="setting-row">
-        <label for="phone">Telefoonnummer (voor 2FA)</label>
-        <input type="text" id="phone" placeholder="+316..." />
-      </div>
-      <div class="setting-row">
-        <label for="2fa-toggle">Twee-factor authenticatie</label>
-        <input type="checkbox" id="2fa-toggle" /> 2FA aanzetten
-      </div>
-      <div class="setting-row">
-        <button onclick="update2FA()">Instellingen opslaan</button>
-      </div>
-    </div>
-    <div id="save-popup" style="display: none; text-align: center; margin-top: 1rem; color: var(--clr-primary-light); font-weight: 600;">Instellingen opgeslagen!</div>
-  </main>
+  <div class="login-card">
+    <img src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks logo" class="logo">
+    <h2 class="gradient-text">Inloggen bij Codeblocks</h2>
+    <div id="error" class="error-message"></div>
+    <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
+    <input type="password" placeholder="Wachtwoord" id="password">
+    <button class="login-button" onclick="loginUser()">Inloggen</button>
+    <button class="google-button" onclick= *hier moet je login with google zetten zodra open* ()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262" preserveAspectRatio="xMidYMid meet">
+        <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/>
+        <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/>
+        <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"/>
+        <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/>
+      </svg>
+      Continue with Google (google portaal nog niet open)
+    </button>
+    <a href="#" class="forgot">Wachtwoord vergeten?</a>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import {
+      getAuth,
+      signInWithEmailAndPassword,
+      onAuthStateChanged,
+      GoogleAuthProvider,
+      signInWithPopup
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
-    const app = initializeApp({
+    const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
-      projectId: "codeblocks-app"
-    });
-
-    const auth = getAuth(app);
-    const db = getFirestore(app);
-
-    let currentUID = null;
-
-    onAuthStateChanged(auth, async (user) => {
-      if (!user) return location.href = "index.html";
-      currentUID = user.uid;
-
-      const snap = await getDoc(doc(db, "users", user.uid));
-      if (snap.exists()) {
-        const data = snap.data();
-        document.getElementById("phone").value = data.phone || "";
-        document.getElementById("2fa-toggle").checked = data.mfaEnabled === true;
-      }
-    });
-
-    window.update2FA = async () => {
-      const phone = document.getElementById("phone").value;
-      const mfaEnabled = document.getElementById("2fa-toggle").checked;
-      if (!currentUID) return;
-
-      await setDoc(doc(db, "users", currentUID), {
-        phone,
-        mfaEnabled
-      }, { merge: true });
-
-      const popup = document.getElementById("save-popup");
-      popup.style.display = "block";
-      setTimeout(() => popup.style.display = "none", 3000);
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.firebasestorage.app",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
     };
 
-    document.querySelector('.menu-item:last-child').addEventListener('click', () => {
-      auth.signOut().then(() => {
-        location.href = 'index.html';
-      });
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+
+    window.loginUser = async function () {
+      const email = document.getElementById("username").value;
+      const password = document.getElementById("password").value;
+      const errorDiv = document.getElementById("error");
+      errorDiv.textContent = "";
+
+      try {
+        await signInWithEmailAndPassword(auth, email, password);
+      } catch (error) {
+        handleAuthError(error.code);
+      }
+    };
+
+    window.loginWithGoogle = async function () {
+      const provider = new GoogleAuthProvider();
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        document.getElementById("error").textContent = "Google login mislukt: " + error.message;
+      }
+    };
+
+    function handleAuthError(code) {
+      const errorDiv = document.getElementById("error");
+      if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-email", "auth/missing-password"].includes(code)) {
+        errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
+      } else if (code === "auth/email-already-in-use") {
+        errorDiv.textContent = "Dit e-mailadres is al in gebruik.";
+      } else if (code === "auth/weak-password") {
+        errorDiv.textContent = "Gebruik een sterker wachtwoord (minimaal 6 tekens).";
+      } else {
+        errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
+      }
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        window.location.href = "dashboard.html";
+      }
     });
+  </script>
+
+  <script>
+    for (let i = 0; i < 20; i++) {
+      const dot = document.createElement("div");
+      dot.classList.add("floating-dot");
+      const size = Math.random() * 20 + 10;
+      dot.style.width = `${size}px`;
+      dot.style.height = `${size}px`;
+      dot.style.left = `${Math.random() * 100}%`;
+      dot.style.top = `${Math.random() * 100}%`;
+      dot.style.animationDuration = `${5 + Math.random() * 10}s`;
+      dot.style.animationDelay = `${Math.random() * 5}s`;
+      document.body.appendChild(dot);
+    }
   </script>
 </body>
 </html>
