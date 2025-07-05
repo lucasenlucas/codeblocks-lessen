@@ -1,134 +1,64 @@
-<!DOCTYPE html>
-<html lang="nl">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2FA Instellen</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
-  <style>
-    body {
-      background-color: #0f0f1c;
-      font-family: 'Inter', sans-serif;
-      color: white;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+import { authenticator } from "https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js";
+import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+
+const firebaseConfig = {
+  apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+  authDomain: "codeblocks-app.firebaseapp.com",
+  projectId: "codeblocks-app",
+  storageBucket: "codeblocks-app.firebasestorage.app",
+  messagingSenderId: "341679011888",
+  appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth();
+const db = getFirestore(app);
+
+const qrContainer = document.getElementById("qrcode");
+const form = document.getElementById("verify-form");
+const input = document.getElementById("token");
+
+onAuthStateChanged(auth, async (user) => {
+  if (!user) return alert("Je bent niet ingelogd");
+
+  const userRef = doc(db, "users", user.uid);
+  const userSnap = await getDoc(userRef);
+
+  let secret = userSnap.exists() && userSnap.data().two_fa_secret
+    ? userSnap.data().two_fa_secret
+    : authenticator.generateSecret();
+
+  const otpauth = authenticator.keyuri(user.email, "Codeblocks", secret);
+
+  // QR tonen
+  QRCode.toCanvas(document.getElementById('qrcode'), otpauth, (err) => {
+    if (err) console.error(err);
+  });
+
+  // Opslaan als nog niet bestaat
+  if (!userSnap.exists() || !userSnap.data().two_fa_secret) {
+    await setDoc(userRef, {
+      two_fa_secret: secret,
+      two_fa_enabled: false
+    }, { merge: true });
+  }
+
+  // Verificatie
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const token = input.value.trim();
+    const isValid = authenticator.check(token, secret);
+
+    if (isValid) {
+      await updateDoc(userRef, { two_fa_enabled: true });
+      alert("✅ 2FA is succesvol geactiveerd!");
+    } else {
+      alert("❌ Ongeldige code. Probeer opnieuw.");
     }
-    .card {
-      background-color: #17172a;
-      padding: 40px;
-      border-radius: 20px;
-      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-      width: 100%;
-      max-width: 500px;
-      text-align: center;
-    }
-    .card h2 {
-      color: #b388ff;
-    }
-    .card input {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      border-radius: 10px;
-      margin-top: 20px;
-      font-size: 16px;
-    }
-    .card button {
-      margin-top: 20px;
-      background: linear-gradient(to right, #a288f4, #9f79ff);
-      border: none;
-      padding: 12px 20px;
-      border-radius: 10px;
-      font-weight: bold;
-      color: white;
-      font-size: 16px;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-    .card button:hover {
-      transform: scale(1.05);
-      box-shadow: 0 0 10px #a288f4;
-    }
-    canvas {
-      margin-top: 20px;
-    }
-  </style>
-</head>
-<body>
-  <div class="card">
-    <h2>2FA Instellen</h2>
-    <p>Scan de QR-code met Google Authenticator of Microsoft Authenticator.</p>
-    <canvas id="qr"></canvas>
-    <p>Voer de 6-cijferige code in die je nu ziet in de app:</p>
-    <input type="text" id="tokenInput" placeholder="123456">
-    <button id="verifyBtn">Bevestigen</button>
-  </div>
-
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-    import { authenticator } from "https://cdn.jsdelivr.net/npm/otplib@12.0.1/+esm";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
-      authDomain: "codeblocks-app.firebaseapp.com",
-      projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.firebasestorage.app",
-      messagingSenderId: "341679011888",
-      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const auth = getAuth(app);
-
-    onAuthStateChanged(auth, async (user) => {
-      if (user) {
-        const userDocRef = doc(db, "users", user.uid);
-        const userSnap = await getDoc(userDocRef);
-        if (!userSnap.exists()) return;
-
-        let data = userSnap.data();
-        let secret = data?.two_fa_secret;
-
-        if (!secret) {
-          secret = authenticator.generateSecret();
-          await updateDoc(userDocRef, {
-            two_fa_secret: secret,
-            two_fa_enabled: false
-          });
-        }
-
-        const otpauthUrl = authenticator.keyuri(user.email, "Codeblocks", secret);
-
-        QRCode.toCanvas(document.getElementById("qr"), otpauthUrl, function (error) {
-          if (error) {
-            console.error("QR Error:", error);
-            alert("❌ QR-code genereren mislukt.");
-          } else {
-            console.log("✅ QR-code gegenereerd");
-          }
-        });
-
-        document.getElementById("verifyBtn").addEventListener("click", async () => {
-          const code = document.getElementById("tokenInput").value;
-          const isValid = authenticator.check(code, secret);
-          if (isValid) {
-            await updateDoc(userDocRef, {
-              two_fa_enabled: true
-            });
-            alert("✅ 2FA succesvol ingesteld!");
-            location.href = "/dashboard";
-          } else {
-            alert("❌ Ongeldige code, probeer opnieuw.");
-          }
-        });
-      }
-    });
-  </script>
-</body>
-</html>
+  });
+});
+</script>
