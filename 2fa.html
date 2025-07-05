@@ -2,49 +2,58 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>2FA Instellen</title>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
   <style>
     body {
-      background-color: #0b0f1a;
+      background-color: #0f0f1c;
+      font-family: 'Inter', sans-serif;
       color: white;
-      font-family: Inter, sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
+      margin: 0;
     }
     .card {
-      background-color: #161a2d;
-      padding: 2rem;
-      border-radius: 14px;
-      text-align: center;
+      background-color: #17172a;
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 0 10px 20px rgba(0,0,0,0.3);
       width: 100%;
-      max-width: 420px;
+      max-width: 500px;
+      text-align: center;
     }
-    canvas {
-      margin: 1rem auto;
+    .card h2 {
+      color: #b388ff;
     }
-    input {
+    .card input {
       width: 100%;
       padding: 12px;
-      border-radius: 10px;
       border: none;
-      background: #10152b;
-      color: white;
-      font-size: 1rem;
-      margin-top: 1rem;
+      border-radius: 10px;
+      margin-top: 20px;
+      font-size: 16px;
     }
-    button {
-      background: #8a70ff;
-      padding: 12px 20px;
+    .card button {
+      margin-top: 20px;
+      background: linear-gradient(to right, #a288f4, #9f79ff);
       border: none;
+      padding: 12px 20px;
       border-radius: 10px;
-      color: white;
       font-weight: bold;
-      margin-top: 1rem;
+      color: white;
+      font-size: 16px;
       cursor: pointer;
+      transition: all 0.3s ease;
+    }
+    .card button:hover {
+      transform: scale(1.05);
+      box-shadow: 0 0 10px #a288f4;
+    }
+    canvas {
+      margin-top: 20px;
     }
   </style>
 </head>
@@ -54,19 +63,15 @@
     <p>Scan de QR-code met Google Authenticator of Microsoft Authenticator.</p>
     <canvas id="qr"></canvas>
     <p>Voer de 6-cijferige code in die je nu ziet in de app:</p>
-    <input type="text" id="code" maxlength="6" placeholder="123456" />
-    <button id="confirm">Bevestigen</button>
+    <input type="text" id="tokenInput" placeholder="123456">
+    <button id="verifyBtn">Bevestigen</button>
   </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-    import {
-      getFirestore,
-      doc,
-      updateDoc,
-      getDoc
-    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { authenticator } from "https://cdn.jsdelivr.net/npm/otplib@12.0.1/+esm";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -78,48 +83,51 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
     const db = getFirestore(app);
-
-    import * as speakeasy from "https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/+esm";
-
-    let secret = null;
+    const auth = getAuth(app);
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return location.href = "index.html";
+      if (user) {
+        const userDocRef = doc(db, "users", user.uid);
+        const userSnap = await getDoc(userDocRef);
+        if (!userSnap.exists()) return;
 
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
+        let data = userSnap.data();
+        let secret = data?.two_fa_secret;
 
-      if (userSnap.exists() && userSnap.data()["2fa_secret"]) {
-        secret = { base32: userSnap.data()["2fa_secret"] };
-      } else {
-        secret = speakeasy.generateSecret({ name: `Codeblocks (${user.email})` });
+        if (!secret) {
+          secret = authenticator.generateSecret();
+          await updateDoc(userDocRef, {
+            two_fa_secret: secret,
+            two_fa_enabled: false
+          });
+        }
 
-        QRCode.toCanvas(document.getElementById("qr"), secret.otpauth_url, function (error) {
-          if (error) console.error(error);
+        const otpauthUrl = authenticator.keyuri(user.email, "Codeblocks", secret);
+
+        QRCode.toCanvas(document.getElementById("qr"), otpauthUrl, function (error) {
+          if (error) {
+            console.error("QR Error:", error);
+            alert("❌ QR-code genereren mislukt.");
+          } else {
+            console.log("✅ QR-code gegenereerd");
+          }
+        });
+
+        document.getElementById("verifyBtn").addEventListener("click", async () => {
+          const code = document.getElementById("tokenInput").value;
+          const isValid = authenticator.check(code, secret);
+          if (isValid) {
+            await updateDoc(userDocRef, {
+              two_fa_enabled: true
+            });
+            alert("✅ 2FA succesvol ingesteld!");
+            location.href = "/dashboard";
+          } else {
+            alert("❌ Ongeldige code, probeer opnieuw.");
+          }
         });
       }
-
-      document.getElementById("confirm").addEventListener("click", async () => {
-        const token = document.getElementById("code").value;
-        const isValid = speakeasy.totp.verify({
-          secret: secret.base32,
-          encoding: "base32",
-          token
-        });
-
-        if (isValid) {
-          await updateDoc(userRef, {
-            "2fa_secret": secret.base32,
-            "2fa_enabled": true
-          });
-          alert("✅ 2FA ingesteld!");
-          location.href = "dashboard.html";
-        } else {
-          alert("❌ Code is onjuist, probeer opnieuw.");
-        }
-      });
     });
   </script>
 </body>
