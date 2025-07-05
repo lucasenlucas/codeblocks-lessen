@@ -2,68 +2,28 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2FA Instellen</title>
-  <script src="https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-  <style>
-    body {
-      background-color: #0b0d1a;
-      color: white;
-      font-family: sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-    }
-    .box {
-      background: #11142a;
-      padding: 2rem;
-      border-radius: 1rem;
-      box-shadow: 0 0 40px rgba(0,0,0,0.2);
-      text-align: center;
-    }
-    input {
-      padding: 0.5rem;
-      margin: 1rem 0;
-      width: 80%;
-      border-radius: 0.5rem;
-      border: none;
-      font-size: 1rem;
-    }
-    button {
-      padding: 0.7rem 1.5rem;
-      font-weight: bold;
-      background: #7355ff;
-      border: none;
-      border-radius: 0.5rem;
-      color: white;
-      cursor: pointer;
-    }
-    #qr {
-      margin-top: 1rem;
-    }
-  </style>
-</head>
-<body>
-  <div class="box">
-    <h2>2FA Instellen</h2>
-    <div id="qr"></div>
-    <p>Scan deze QR met Google/Microsoft Authenticator</p>
-    <input type="text" id="code" placeholder="Voer 6-cijferige code in" />
-    <button onclick="verifyCode()">Bevestigen</button>
-  </div>
+  <title>2FA Instellen - Codeblocks</title>
 
+  <!-- QR en 2FA libs -->
+  <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/index.min.js"></script>
+
+  <!-- Firebase SDK -->
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import {
+      getFirestore,
+      doc,
+      updateDoc,
+      getDoc
+    } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
       projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.appspot.com",
+      storageBucket: "codeblocks-app.firebasestorage.app",
       messagingSenderId: "341679011888",
       appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
     };
@@ -72,43 +32,113 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let currentSecret;
+    let secret = null;
 
     onAuthStateChanged(auth, async (user) => {
       if (!user) return location.href = "index.html";
 
-      // 🔐 1. Genereer 2FA-secret
-      currentSecret = speakeasy.generateSecret({ name: `Codeblocks (${user.email})` });
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
 
-      // 🔐 2. Genereer QR-code
-      QRCode.toCanvas(document.getElementById("qr"), currentSecret.otpauth_url, function (error) {
-        if (error) console.error(error);
-      });
-
-      // Opslaan in geheugen – pas na bevestiging in Firestore!
-    });
-
-    // ✅ 3. Bevestigen en opslaan
-    window.verifyCode = async () => {
-      const code = document.getElementById("code").value;
-      const verified = speakeasy.totp.verify({
-        secret: currentSecret.base32,
-        encoding: "base32",
-        token: code
-      });
-
-      if (verified) {
-        const user = auth.currentUser;
-        await updateDoc(doc(db, "users", user.uid), {
-          "2fa_enabled": true,
-          "2fa_secret": currentSecret.base32
-        });
-        alert("✅ 2FA is ingesteld!");
-        location.href = "dashboard.html";
+      // Als gebruiker al een 2FA-secret heeft, gebruik die
+      if (userSnap.exists() && userSnap.data().hasOwnProperty("2fa_secret")) {
+        secret = {
+          base32: userSnap.data()["2fa_secret"]
+        };
       } else {
-        alert("❌ Ongeldige code.");
+        // Nieuwe secret genereren
+        secret = speakeasy.generateSecret({ name: `Codeblocks (${user.email})` });
+
+        // QR-code tonen
+        QRCode.toCanvas(document.getElementById("qr"), secret.otpauth_url, function (error) {
+          if (error) console.error(error);
+        });
       }
-    };
+
+      document.getElementById("confirm").onclick = async () => {
+        const token = document.getElementById("code").value;
+
+        const isValid = speakeasy.totp.verify({
+          secret: secret.base32,
+          encoding: "base32",
+          token
+        });
+
+        if (isValid) {
+          await updateDoc(userRef, {
+            "2fa_secret": secret.base32,
+            "2fa_enabled": true
+          });
+          alert("✅ 2FA is ingesteld!");
+          location.href = "dashboard.html";
+        } else {
+          alert("❌ Ongeldige code, probeer opnieuw.");
+        }
+      };
+    });
   </script>
+
+  <style>
+    body {
+      background: #0b0f1a;
+      color: white;
+      font-family: "Inter", sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+    }
+    .card {
+      background: #161a2d;
+      padding: 2rem;
+      border-radius: 14px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.6);
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+      animation: fadeInUp 0.8s ease;
+    }
+    canvas {
+      margin: 1rem auto;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border-radius: 10px;
+      border: none;
+      background: #10152b;
+      color: white;
+      font-size: 1rem;
+      margin-top: 1rem;
+    }
+    button {
+      background: #8a70ff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 10px;
+      color: white;
+      font-weight: bold;
+      margin-top: 1rem;
+      cursor: pointer;
+      transition: background 0.3s ease;
+    }
+    button:hover {
+      background: #a88dff;
+    }
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>2FA Instellen</h2>
+    <p>Scan de QR-code met Google Authenticator of Microsoft Authenticator.</p>
+    <canvas id="qr"></canvas>
+    <p>Voer de 6-cijferige code in die je nu ziet in de app:</p>
+    <input type="text" id="code" maxlength="6" placeholder="123456" />
+    <button id="confirm">Bevestigen</button>
+  </div>
 </body>
 </html>
