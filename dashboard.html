@@ -26,6 +26,10 @@
       padding: 0;
     }
 
+    html {
+      scroll-behavior: smooth;
+    }
+
     body {
       font-family: "Inter", sans-serif;
       background-color: var(--clr-bg);
@@ -44,6 +48,18 @@
       flex-direction: column;
       gap: 1rem;
       box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      animation: slideInLeft 0.6s ease forwards;
+    }
+
+    @keyframes slideInLeft {
+      0% {
+        transform: translateX(-100%);
+        opacity: 0;
+      }
+      100% {
+        transform: translateX(0);
+        opacity: 1;
+      }
     }
 
     .sidebar h2 {
@@ -66,6 +82,7 @@
     .menu-item:hover {
       background-color: var(--clr-primary);
       color: #fff;
+      box-shadow: 0 0 10px var(--clr-primary-light);
     }
 
     .menu-item:last-child {
@@ -81,6 +98,12 @@
       flex: 1;
       padding: 2rem;
       overflow-y: auto;
+      animation: fadeIn 1s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
     }
 
     .section-title {
@@ -101,6 +124,13 @@
       background-color: #0f132c;
       color: var(--clr-text);
       font-size: 1rem;
+      box-shadow: 0 0 8px #00000044;
+      transition: 0.2s;
+    }
+
+    .search-bar input:focus {
+      outline: none;
+      box-shadow: 0 0 12px var(--clr-primary-light);
     }
 
     .grid {
@@ -114,14 +144,14 @@
       padding: 1.5rem;
       border-radius: var(--radius);
       box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
-      transition: var(--transition);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
       opacity: 0;
       transform: translateY(20px);
-      animation: fadeInCard 0.5s ease forwards;
+      animation: fadeInCard 0.6s ease forwards;
     }
 
     .card:hover {
-      transform: translateY(-4px);
+      transform: scale(1.03);
       background-color: var(--clr-card-hover);
       box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
     }
@@ -177,7 +207,7 @@
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
       projectId: "codeblocks-app",
-      storageBucket: "codeblocks-app.firebasestorage.app",
+      storageBucket: "codeblocks-app.appspot.com",
       messagingSenderId: "341679011888",
       appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
     };
@@ -189,7 +219,6 @@
     const moduleList = document.getElementById("module-list");
     const welcomeTitle = document.getElementById("welcome-title");
     const searchInput = document.getElementById("search");
-    const beheerTab = document.getElementById("beheer-tab");
     let modulesData = [];
 
     onAuthStateChanged(auth, async (user) => {
@@ -198,10 +227,6 @@
       const userDoc = await getDoc(doc(db, "users", user.uid));
       const name = userDoc.exists() ? userDoc.data().name : "Gebruiker";
       welcomeTitle.textContent = `Welkom ${name}, hier staan jouw modules`;
-
-      if (userDoc.exists() && userDoc.data().role === "admin") {
-        beheerTab.style.display = "block";
-      }
 
       const q = query(collection(db, "modules"), where("assignedTo", "array-contains", user.email));
       const snapshot = await getDocs(q);
