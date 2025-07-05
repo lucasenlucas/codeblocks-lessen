@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Instellingen - Codeblocks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --clr-bg: #070a19;
+      --clr-bg-accent: #10152f;
+      --clr-primary: #7355ff;
+      --clr-primary-light: #a18bff;
+      --clr-danger: #ff4a4a;
+      --clr-danger-dark: #e63939;
+      --clr-text: #e7e9f7;
+      --clr-text-muted: #8a8fae;
+      --clr-card-bg: #11182f;
+      --radius: 1rem;
+      --transition: 220ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Inter", sans-serif;
+      background-color: var(--clr-bg);
+      color: var(--clr-text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .sidebar {
+      width: 220px;
+      background-color: var(--clr-bg-accent);
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+      animation: slideInLeft 0.6s ease forwards;
+    }
+
+    .sidebar h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: var(--clr-primary);
+    }
+
+    .menu-item {
+      font-size: 1rem;
+      color: var(--clr-text);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .menu-item:hover {
+      background-color: var(--clr-primary);
+      color: #fff;
+    }
+
+    .menu-item:last-child {
+      background-color: var(--clr-danger);
+      color: #fff;
+    }
+
+    .menu-item:last-child:hover {
+      background-color: var(--clr-danger-dark);
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 3rem;
+      overflow-y: auto;
+    }
+
+    .section {
+      background-color: var(--clr-card-bg);
+      padding: 2rem;
+      border-radius: var(--radius);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      margin-bottom: 2rem;
+    }
+
+    .section h3 {
+      margin-bottom: 1rem;
+      font-size: 1.5rem;
+      color: var(--clr-primary-light);
+    }
+
+    .field {
+      margin-bottom: 1.25rem;
+    }
+
+    .field label {
+      font-weight: 600;
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--clr-text-muted);
+    }
+
+    .field input, .field select {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      background-color: #0f132c;
+      border: none;
+      color: var(--clr-text);
+      font-size: 1rem;
+    }
+
+    .field input:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .field .note {
+      font-size: 0.9rem;
+      color: var(--clr-text-muted);
+      margin-top: 0.25rem;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>Codeblocks</h2>
+    <a class="menu-item" href="dashboard.html">Dashboard</a>
+    <a class="menu-item" href="profiel.html">Profiel</a>
+    <a class="menu-item" href="instellingen.html">Instellingen</a>
+    <div class="menu-item" id="logout">Log uit</div>
+  </aside>
+
+  <main class="main-content">
+    <h1 class="section-title">Instellingen</h1>
+
+    <div class="section">
+      <h3>🔒 Beveiliging</h3>
+      <div class="field">
+        <label for="2fa">Tweestapsverificatie</label>
+        <select id="2fa">
+          <option>Ingeschakeld</option>
+          <option>Uitgeschakeld</option>
+        </select>
+      </div>
+
+      <div class="field">
+        <label for="password">Wachtwoord wijzigen</label>
+        <input type="password" id="password" placeholder="Nieuw wachtwoord..." />
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>🎨 Voorkeuren</h3>
+      <div class="field">
+        <label>Thema</label>
+        <input disabled type="text" value="Donker (standaard)" />
+        <div class="note">Het thema is vast ingesteld door Codeblocks.</div>
+      </div>
+
+      <div class="field">
+        <label>Standaard landingspagina</label>
+        <input disabled type="text" value="Dashboard" />
+        <div class="note">Deze instelling is vast ingesteld op ‘Dashboard’.</div>
+      </div>
+
+      <div class="field">
+        <label>Moduleweergave</label>
+        <select id="viewmode">
+          <option value="grid">Tegels</option>
+          <option value="list">Lijst</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>👤 Accountgegevens</h3>
+      <div class="field">
+        <label for="name">Naam</label>
+        <input type="text" id="name" value="..." />
+      </div>
+
+      <div class="field">
+        <label for="email">E-mailadres</label>
+        <input disabled type="email" id="email" value="..." />
+        <div class="note">Wil je je e-mailadres wijzigen? Neem contact op met je contactpersoon bij Codeblocks.</div>
+      </div>
+
+      <div class="field">
+        <label for="org">Organisatie</label>
+        <input disabled type="text" id="org" value="..." />
+        <div class="note">Organisatiewijzigingen worden handmatig verwerkt.</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>🖼️ Interface</h3>
+      <div class="field">
+        <label for="avatar">Profielfoto</label>
+        <input type="file" id="avatar" accept="image/*" />
+      </div>
+
+      <div class="field">
+        <label for="language">Taal</label>
+        <select id="language" disabled>
+          <option selected>Nederlands</option>
+        </select>
+        <div class="note">Andere talen zijn binnenkort beschikbaar.</div>
+      </div>
+    </div>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.appspot.com",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return location.href = "index.html";
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const data = userDoc.data();
+        document.getElementById("name").value = data.name || "-";
+        document.getElementById("email").value = user.email || "-";
+        document.getElementById("org").value = data.organization || "-";
+      }
+    });
+
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => {
+        location.href = "index.html";
+      });
+    });
+  </script>
+</body>
+</html>
