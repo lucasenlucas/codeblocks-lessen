@@ -1,64 +1,139 @@
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
-import { authenticator } from "https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js";
-import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
-  authDomain: "codeblocks-app.firebaseapp.com",
-  projectId: "codeblocks-app",
-  storageBucket: "codeblocks-app.firebasestorage.app",
-  messagingSenderId: "341679011888",
-  appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
-};
-
-const app = initializeApp(firebaseConfig);
-const auth = getAuth();
-const db = getFirestore(app);
-
-const qrContainer = document.getElementById("qrcode");
-const form = document.getElementById("verify-form");
-const input = document.getElementById("token");
-
-onAuthStateChanged(auth, async (user) => {
-  if (!user) return alert("Je bent niet ingelogd");
-
-  const userRef = doc(db, "users", user.uid);
-  const userSnap = await getDoc(userRef);
-
-  let secret = userSnap.exists() && userSnap.data().two_fa_secret
-    ? userSnap.data().two_fa_secret
-    : authenticator.generateSecret();
-
-  const otpauth = authenticator.keyuri(user.email, "Codeblocks", secret);
-
-  // QR tonen
-  QRCode.toCanvas(document.getElementById('qrcode'), otpauth, (err) => {
-    if (err) console.error(err);
-  });
-
-  // Opslaan als nog niet bestaat
-  if (!userSnap.exists() || !userSnap.data().two_fa_secret) {
-    await setDoc(userRef, {
-      two_fa_secret: secret,
-      two_fa_enabled: false
-    }, { merge: true });
-  }
-
-  // Verificatie
-  form.addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const token = input.value.trim();
-    const isValid = authenticator.check(token, secret);
-
-    if (isValid) {
-      await updateDoc(userRef, { two_fa_enabled: true });
-      alert("✅ 2FA is succesvol geactiveerd!");
-    } else {
-      alert("❌ Ongeldige code. Probeer opnieuw.");
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>2FA Instellen</title>
+  <style>
+    body {
+      background-color: #0e0f1a;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      margin: 0;
     }
-  });
-});
-</script>
+    .container {
+      background: #16192b;
+      padding: 2rem 3rem;
+      border-radius: 1rem;
+      box-shadow: 0 0 20px rgba(0,0,0,0.4);
+      max-width: 400px;
+      text-align: center;
+    }
+    h2 {
+      color: #b191f9;
+      margin-bottom: 1rem;
+    }
+    p {
+      margin: 1rem 0;
+    }
+    #qrcode {
+      margin: 1rem auto;
+    }
+    input {
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 0.5rem;
+      background-color: #101428;
+      color: #fff;
+      margin-top: 1rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      width: 100%;
+      padding: 0.75rem;
+      border: none;
+      background: linear-gradient(90deg, #8a6cff, #c589ff);
+      color: white;
+      font-weight: bold;
+      border-radius: 0.5rem;
+      cursor: pointer;
+    }
+    button:hover {
+      opacity: 0.9;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h2>2FA Instellen</h2>
+    <p>Scan de QR-code met Google Authenticator of Microsoft Authenticator.</p>
+    <canvas id="qrcode"></canvas>
+    <form id="verify-form">
+      <p>Voer de 6-cijferige code in die je nu ziet in de app:</p>
+      <input type="text" id="token" placeholder="123456" required />
+      <button type="submit">Bevestigen</button>
+    </form>
+  </div>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.10.0/firebase-firestore.js";
+    import { authenticator } from "https://cdn.jsdelivr.net/npm/otplib@12.0.1/otplib-browser.js";
+    import QRCode from 'https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js';
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.firebasestorage.app",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth();
+    const db = getFirestore(app);
+
+    const qrCanvas = document.getElementById("qrcode");
+    const form = document.getElementById("verify-form");
+    const tokenInput = document.getElementById("token");
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return alert("Je bent niet ingelogd");
+
+      const userRef = doc(db, "users", user.uid);
+      const userSnap = await getDoc(userRef);
+
+      let secret = userSnap.exists() && userSnap.data().two_fa_secret
+        ? userSnap.data().two_fa_secret
+        : authenticator.generateSecret();
+
+      const otpauth = authenticator.keyuri(user.email, "Codeblocks", secret);
+
+      // Toon QR-code
+      QRCode.toCanvas(qrCanvas, otpauth, (err) => {
+        if (err) console.error("QR-generatie mislukt", err);
+      });
+
+      // Als er nog geen 2FA secret was, dan nu opslaan
+      if (!userSnap.exists() || !userSnap.data().two_fa_secret) {
+        await setDoc(userRef, {
+          two_fa_secret: secret,
+          two_fa_enabled: false
+        }, { merge: true });
+      }
+
+      // Code controle bij submit
+      form.addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const token = tokenInput.value.trim();
+        const isValid = authenticator.check(token, secret);
+
+        if (isValid) {
+          await updateDoc(userRef, { two_fa_enabled: true });
+          alert("✅ 2FA is succesvol geactiveerd!");
+        } else {
+          alert("❌ Ongeldige code. Probeer opnieuw.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
