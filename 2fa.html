@@ -3,95 +3,61 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>2FA Beveiliging - Codeblocks</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <title>2FA Instellen</title>
+  <script src="https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <style>
-    :root {
-      --clr-bg: #070a19;
-      --clr-bg-accent: #10152f;
-      --clr-primary: #7355ff;
-      --clr-primary-light: #a18bff;
-      --clr-text: #e7e9f7;
-      --clr-text-muted: #8a8fae;
-      --radius: 1rem;
-      --transition: 220ms ease;
-    }
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
     body {
-      font-family: 'Inter', sans-serif;
-      background-color: var(--clr-bg);
-      color: var(--clr-text);
+      background-color: #0b0d1a;
+      color: white;
+      font-family: sans-serif;
       display: flex;
       justify-content: center;
       align-items: center;
       height: 100vh;
-      padding: 2rem;
     }
-    .card {
-      background-color: var(--clr-bg-accent);
+    .box {
+      background: #11142a;
       padding: 2rem;
-      border-radius: var(--radius);
-      width: 100%;
-      max-width: 500px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-    }
-    h2 {
+      border-radius: 1rem;
+      box-shadow: 0 0 40px rgba(0,0,0,0.2);
       text-align: center;
-      margin-bottom: 1.5rem;
-      color: var(--clr-primary-light);
-    }
-    .qr {
-      display: flex;
-      justify-content: center;
-      margin: 1rem 0;
     }
     input {
-      width: 100%;
-      padding: 0.75rem;
-      margin-top: 1rem;
-      border-radius: 10px;
-      border: 1px solid #2a2e43;
-      background-color: #0f132c;
-      color: var(--clr-text);
+      padding: 0.5rem;
+      margin: 1rem 0;
+      width: 80%;
+      border-radius: 0.5rem;
+      border: none;
+      font-size: 1rem;
     }
     button {
-      margin-top: 1rem;
-      width: 100%;
-      padding: 0.75rem;
+      padding: 0.7rem 1.5rem;
+      font-weight: bold;
+      background: #7355ff;
       border: none;
-      border-radius: 10px;
-      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
+      border-radius: 0.5rem;
       color: white;
-      font-weight: 600;
       cursor: pointer;
     }
-    .message {
+    #qr {
       margin-top: 1rem;
-      text-align: center;
     }
   </style>
 </head>
 <body>
-  <div class="card">
+  <div class="box">
     <h2>2FA Instellen</h2>
-    <p>Scan de QR-code met Google Authenticator of Microsoft Authenticator.</p>
-    <div class="qr" id="qrcode"></div>
-    <p>Voer de 6-cijferige code in die je nu ziet in de app:</p>
-    <input type="text" id="code" placeholder="123456" maxlength="6" />
+    <div id="qr"></div>
+    <p>Scan deze QR met Google/Microsoft Authenticator</p>
+    <input type="text" id="code" placeholder="Voer 6-cijferige code in" />
     <button onclick="verifyCode()">Bevestigen</button>
-    <div class="message" id="message"></div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/speakeasy@2.0.0/index.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, doc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
@@ -106,40 +72,43 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    let secret;
-    let currentUser;
+    let currentSecret;
 
     onAuthStateChanged(auth, async (user) => {
-      if (!user) return window.location.href = "index.html";
-      currentUser = user;
-      secret = speakeasy.generateSecret({ name: `Codeblocks (${user.email})` });
+      if (!user) return location.href = "index.html";
 
-      QRCode.toCanvas(document.getElementById("qrcode"), secret.otpauth_url, err => {
-        if (err) console.error(err);
+      // 🔐 1. Genereer 2FA-secret
+      currentSecret = speakeasy.generateSecret({ name: `Codeblocks (${user.email})` });
+
+      // 🔐 2. Genereer QR-code
+      QRCode.toCanvas(document.getElementById("qr"), currentSecret.otpauth_url, function (error) {
+        if (error) console.error(error);
       });
+
+      // Opslaan in geheugen – pas na bevestiging in Firestore!
     });
 
-    window.verifyCode = async function () {
-      const inputCode = document.getElementById("code").value;
+    // ✅ 3. Bevestigen en opslaan
+    window.verifyCode = async () => {
+      const code = document.getElementById("code").value;
       const verified = speakeasy.totp.verify({
-        secret: secret.base32,
+        secret: currentSecret.base32,
         encoding: "base32",
-        token: inputCode
+        token: code
       });
 
-      const msg = document.getElementById("message");
       if (verified) {
-        await setDoc(doc(db, "users", currentUser.uid), {
-          2fa_enabled: true,
-          2fa_secret: secret.base32
-        }, { merge: true });
-        msg.textContent = "✅ 2FA succesvol geactiveerd!";
-        msg.style.color = "lightgreen";
+        const user = auth.currentUser;
+        await updateDoc(doc(db, "users", user.uid), {
+          "2fa_enabled": true,
+          "2fa_secret": currentSecret.base32
+        });
+        alert("✅ 2FA is ingesteld!");
+        location.href = "dashboard.html";
       } else {
-        msg.textContent = "❌ Ongeldige code. Probeer opnieuw.";
-        msg.style.color = "#ff6b6b";
+        alert("❌ Ongeldige code.");
       }
-    }
+    };
   </script>
 </body>
 </html>
