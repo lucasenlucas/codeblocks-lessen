@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Statistieken - Codeblocks</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet" />
+  <script defer data-domain="codeblocks.nl" src="https://plausible.io/js/script.outbound-links.tagged-events.js"></script>
+  <script>
+    window.plausible = window.plausible || function() {
+      (window.plausible.q = window.plausible.q || []).push(arguments);
+    }
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    :root {
+      --clr-bg: #070a19;
+      --clr-bg-accent: #10152f;
+      --clr-primary: #7355ff;
+      --clr-primary-light: #a18bff;
+      --clr-danger: #ff4a4a;
+      --clr-text: #e7e9f7;
+      --clr-text-muted: #8a8fae;
+      --clr-card-bg: #11182f;
+      --clr-card-hover: #1d2542;
+      --radius: 1rem;
+      --transition: 220ms ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background-color: var(--clr-bg);
+      color: var(--clr-text);
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    aside.sidebar {
+      width: 220px;
+      background-color: var(--clr-bg-accent);
+      padding: 2rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      box-shadow: 2px 0 10px rgba(0, 0, 0, 0.2);
+    }
+
+    .sidebar h2 {
+      font-size: 1.4rem;
+      margin-bottom: 1.5rem;
+      text-align: center;
+      color: var(--clr-primary);
+    }
+
+    .menu-item {
+      font-size: 1rem;
+      color: var(--clr-text);
+      padding: 0.75rem 1rem;
+      border-radius: var(--radius);
+      transition: var(--transition);
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    .menu-item:hover {
+      background-color: var(--clr-primary);
+      color: #fff;
+      box-shadow: 0 0 10px var(--clr-primary-light);
+    }
+
+    .menu-item:last-child {
+      background-color: var(--clr-danger);
+      color: #fff;
+    }
+
+    .menu-item:last-child:hover {
+      background-color: #e63939;
+    }
+
+    .main-content {
+      flex: 1;
+      padding: 2rem;
+      overflow-y: auto;
+    }
+
+    h1 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-cards {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: var(--clr-card-bg);
+      padding: 1.5rem;
+      border-radius: var(--radius);
+      flex: 1;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      text-align: center;
+    }
+
+    canvas {
+      width: 100%;
+      max-width: 700px;
+      margin: 0 auto;
+      display: block;
+      background-color: var(--clr-card-bg);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <aside class="sidebar">
+    <h2>Codeblocks</h2>
+    <a class="menu-item" href="dashboard.html">Dashboard</a>
+    <a class="menu-item" href="profiel.html">Profiel</a>
+    <a class="menu-item" href="statistieken.html" id="stats-link" style="display: none;">Statistieken</a>
+    <div class="menu-item" id="logout">Log uit</div>
+  </aside>
+
+  <main class="main-content">
+    <h1>Website Statistieken</h1>
+
+    <div class="stat-cards">
+      <div class="stat-card">
+        <h2>Bezoekers laatste 7 dagen</h2>
+        <p id="visitors">...</p>
+      </div>
+      <div class="stat-card">
+        <h2>Paginaweergaven</h2>
+        <p id="pageviews">...</p>
+      </div>
+    </div>
+
+    <canvas id="visitorsChart"></canvas>
+  </main>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import { getFirestore, doc, getDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+      authDomain: "codeblocks-app.firebaseapp.com",
+      projectId: "codeblocks-app",
+      storageBucket: "codeblocks-app.appspot.com",
+      messagingSenderId: "341679011888",
+      appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    onAuthStateChanged(auth, async (user) => {
+      if (!user) return location.href = "index.html";
+
+      const userDoc = await getDoc(doc(db, "users", user.uid));
+      if (userDoc.exists()) {
+        const role = userDoc.data().role;
+        if (role === "admin") {
+          document.getElementById("stats-link").style.display = "block";
+        } else {
+          document.querySelector("main").innerHTML = "<h2 style='text-align:center;'>Je hebt geen toegang tot deze pagina.</h2>";
+        }
+      }
+    });
+
+    document.getElementById("logout").addEventListener("click", () => {
+      signOut(auth).then(() => location.href = "index.html");
+    });
+
+    fetch("https://plausible.io/api/v1/stats/aggregate?site_id=codeblocks.nl&metrics=pageviews,visitors&period=7d")
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("visitors").textContent = data.results.visitors.value;
+        document.getElementById("pageviews").textContent = data.results.pageviews.value;
+
+        new Chart(document.getElementById("visitorsChart"), {
+          type: 'bar',
+          data: {
+            labels: ['Dag 1','Dag 2','Dag 3','Dag 4','Dag 5','Dag 6','Dag 7'],
+            datasets: [{
+              label: 'Bezoekers',
+              data: [40, 52, 48, 60, 72, 69, 58], // Dummy data
+              backgroundColor: '#7355ff'
+            }]
+          },
+          options: {
+            plugins: {
+              legend: { labels: { color: '#e7e9f7' } }
+            },
+            scales: {
+              y: {
+                ticks: { color: '#e7e9f7' },
+                grid: { color: '#1d2542' }
+              },
+              x: {
+                ticks: { color: '#e7e9f7' },
+                grid: { color: '#1d2542' }
+              }
+            }
+          }
+        });
+      })
+      .catch(() => {
+        document.getElementById("visitors").textContent = "Fout bij ophalen";
+        document.getElementById("pageviews").textContent = "Fout bij ophalen";
+      });
+  </script>
+</body>
+</html>
