@@ -3,102 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dashboard - Codeblocks</title>
+  <title>Demo-aanvragen - Codeblocks</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet"/>
   <style>
-    :root {
-      --clr-bg:#070a19; --clr-bg-accent:#10152f; --clr-primary:#7355ff; --clr-primary-light:#a18bff;
-      --clr-danger:#ff4a4a; --clr-text:#e7e9f7; --clr-text-muted:#8a8fae;
-      --clr-card-bg:#11182f; --clr-card-hover:#1d2542; --radius:1rem; --transition:220ms ease;
+    :root{
+      --bg:#070a19; --bg2:#10152f; --card:#11182f; --cardH:#1d2542;
+      --txt:#e7e9f7; --muted:#8a8fae; --pri:#7355ff; --pri2:#a18bff; --danger:#ff4a4a;
+      --r:1rem;
     }
     *{box-sizing:border-box;margin:0;padding:0}
-    html{scroll-behavior:smooth}
-    body{font-family:"Inter",sans-serif;background:var(--clr-bg);color:var(--clr-text);display:flex;height:100vh;overflow:hidden}
+    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--txt);display:flex;min-height:100vh}
+    .sidebar{width:220px;background:var(--bg2);padding:2rem 1rem;display:flex;flex-direction:column;gap:1rem}
+    .sidebar h2{color:var(--pri);text-align:center;margin-bottom:1.2rem}
+    .menu-item{padding:.75rem 1rem;border-radius:var(--r);color:var(--txt);text-decoration:none}
+    .menu-item:hover{background:var(--pri);color:#fff}
+    .logout{background:var(--danger);color:#fff}
+    .logout:hover{filter:brightness(.95)}
+    .main{flex:1;padding:2rem;max-width:1200px;margin-inline:auto}
+    .title{font-size:2rem;margin-bottom:1.2rem}
 
-    .sidebar{width:220px;background:var(--clr-bg-accent);padding:2rem 1rem;display:flex;flex-direction:column;gap:1rem;box-shadow:2px 0 10px #0003;animation:slideInLeft .6s ease forwards}
-    @keyframes slideInLeft{0%{transform:translateX(-100%);opacity:0}100%{transform:translateX(0);opacity:1}}
-    .sidebar h2{font-size:1.4rem;margin-bottom:1.5rem;text-align:center;color:var(--clr-primary)}
-    .menu-item{font-size:1rem;color:var(--clr-text);padding:.75rem 1rem;border-radius:var(--radius);transition:var(--transition);cursor:pointer;text-decoration:none}
-    .menu-item:hover{background:var(--clr-primary);color:#fff;box-shadow:0 0 10px var(--clr-primary-light)}
-    .menu-item.logout{background:var(--clr-danger);color:#fff}
-    .menu-item.logout:hover{background:#e63939}
-    .menu-item.active{background:var(--clr-primary);color:#fff}
+    /* list */
+    .list{display:grid;gap:1rem}
+    .card{background:var(--card);border-radius:.9rem;padding:1rem 1.1rem;display:flex;justify-content:space-between;align-items:center;cursor:pointer;transition:.2s}
+    .card:hover{background:var(--cardH)}
+    .left{display:flex;flex-direction:column;gap:.25rem}
+    .name{font-weight:800}
+    .school{color:var(--muted);font-size:.95rem}
+    .right{display:flex;align-items:center;gap:.6rem}
+    .badge{padding:.25rem .6rem;border-radius:999px;font-size:.8rem;font-weight:800}
+    .b-nieuw{background:#223256;color:#bcd3ff}
+    .b-inb{background:#2b3a20;color:#c5f1b2}
+    .b-afg{background:#3b2a2a;color:#f2c6c6}
 
-    .main-content{flex:1;padding:2rem;overflow-y:auto;animation:fadeIn 1s ease}
-    @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-    .section-title{font-size:2rem;margin-bottom:1.5rem}
-    .search-bar{margin-bottom:2rem;max-width:500px}
-    .search-bar input{width:100%;padding:.75rem 1rem;border-radius:var(--radius);border:none;background:#0f132c;color:var(--clr-text);font-size:1rem;box-shadow:0 0 8px #0006}
-    .search-bar input:focus{outline:none;box-shadow:0 0 12px var(--clr-primary-light)}
-
-    .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:2rem}
-    .card{background:var(--clr-card-bg);padding:1.5rem;border-radius:var(--radius);box-shadow:0 4px 12px #0003;transition:transform .3s, box-shadow .3s;opacity:0;transform:translateY(20px);animation:fadeInCard .6s ease forwards}
-    .card:hover{transform:scale(1.03);background:var(--clr-card-hover);box-shadow:0 6px 18px #0004}
-    @keyframes fadeInCard{to{opacity:1;transform:translateY(0)}}
-    .card-title{font-size:1.1rem;font-weight:700;margin-bottom:.5rem}
-    .card-subtitle{font-size:.95rem;color:var(--clr-text-muted);margin-bottom:1rem}
-    .card a{color:var(--clr-primary-light);text-decoration:none;font-weight:600}
-    .muted{color:var(--clr-text-muted)}
-    .badge{display:inline-block;padding:.25rem .6rem;border-radius:999px;font-size:.8rem;font-weight:700;}
-    .badge.nieuw{background:#223256;color:#bcd3ff}
-    .badge.inb{background:#2b3a20;color:#c5f1b2}
-    .badge.afg{background:#3b2a2a;color:#f2c6c6}
-    .row{display:flex;gap:.5rem;flex-wrap:wrap;align-items:center}
-    .select, .btn{border:none;border-radius:.7rem;padding:.6rem .8rem;background:#0f132c;color:var(--clr-text);cursor:pointer}
-    .btn.primary{background:var(--clr-primary)}
-    .btn.primary:hover{background:var(--clr-primary-light)}
-    .empty{color:var(--clr-text-muted);text-align:center;padding:2rem 0}
-    .hidden{display:none}
+    /* modal */
+    .modal-wrap{position:fixed;inset:0;display:none;place-items:center;background:rgba(0,0,0,.5);padding:1rem}
+    .modal{width:min(720px,100%);background:var(--card);border:1px solid rgba(255,255,255,.07);border-radius:1rem;padding:1.2rem}
+    .m-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem}
+    .m-title{font-weight:900;font-size:1.2rem}
+    .m-body{display:grid;gap:.6rem}
+    .row{display:grid;grid-template-columns:140px 1fr;gap:.75rem;align-items:start}
+    .lbl{color:var(--muted)}
+    .chips{display:flex;flex-wrap:wrap;gap:.4rem}
+    .chip{background:#0f132c;padding:.35rem .6rem;border-radius:999px;font-size:.85rem}
+    .m-actions{display:flex;gap:.6rem;justify-content:flex-end;margin-top:1rem}
+    .btn{border:none;border-radius:.6rem;padding:.65rem .9rem;background:#0f132c;color:var(--txt);cursor:pointer}
+    .btn.primary{background:var(--pri)}
+    .btn.primary:hover{background:var(--pri2)}
+    .btn.link{background:transparent;text-decoration:underline}
+    .select{background:#0f132c;color:var(--txt);border:none;border-radius:.5rem;padding:.5rem .7rem}
   </style>
 </head>
 <body>
   <aside class="sidebar">
     <h2>Codeblocks</h2>
-    <a class="menu-item active" data-view="modules">Dashboard</a>
-    <a class="menu-item" data-view="profile">Profiel</a>
-    <!-- Deze wordt dynamisch ingevoegd als role === 'admin' -->
-    <a class="menu-item hidden" id="adminTab" data-view="demos">Demo-aanvragen</a>
-    <div class="menu-item logout" id="logout">Log uit</div>
+    <a class="menu-item" href="dashboard.html">Dashboard</a>
+    <a class="menu-item" href="profiel.html">Profiel</a>
+    <a class="menu-item" href="demo.html">Demo-aanvragen</a>
+    <a class="menu-item logout" id="logout">Log uit</a>
   </aside>
 
-  <main class="main-content">
-    <!-- ====== MODULES (default) ====== -->
-    <section id="view-modules">
-      <h1 class="section-title" id="welcome-title">Jouw Modules</h1>
-      <div class="search-bar"><input type="text" id="search" placeholder="Zoek naar modules..."></div>
-      <div class="grid" id="module-list"></div>
-    </section>
+  <main class="main">
+    <h1 class="title">Demo-aanvragen</h1>
+    <div id="list" class="list"></div>
+    <p id="empty" style="color:var(--muted);margin-top:1rem;display:none">Nog geen demo-aanvragen.</p>
+  </main>
 
-    <!-- ====== PROFIEL ====== -->
-    <section id="view-profile" class="hidden">
-      <h1 class="section-title">Profiel</h1>
-      <div class="grid">
-        <div class="card">
-          <div class="card-title" id="profiel-naam">Naam</div>
-          <div class="card-subtitle"><span class="muted">Rol:</span> <span id="profiel-rol">—</span></div>
-          <div class="card-subtitle"><span class="muted">Organisatie:</span> <span id="profiel-org">—</span></div>
-          <div class="muted">Je profielgegevens komen uit <code>users/{uid}</code>.</div>
+  <!-- Modal -->
+  <div id="modalWrap" class="modal-wrap" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true">
+      <div class="m-head">
+        <div class="m-title" id="mTitle">Aanvraag</div>
+        <button class="btn link" id="mClose">Sluiten ✕</button>
+      </div>
+      <div class="m-body">
+        <div class="row"><div class="lbl">Naam</div><div id="mNaam">—</div></div>
+        <div class="row"><div class="lbl">Rol</div><div id="mRol">—</div></div>
+        <div class="row"><div class="lbl">School/org</div><div id="mSchool">—</div></div>
+        <div class="row"><div class="lbl">E-mail</div><div id="mEmail">—</div></div>
+        <div class="row"><div class="lbl">Telefoon</div><div id="mTel">—</div></div>
+        <div class="row"><div class="lbl">Interesse</div><div id="mInteresse" class="chips"></div></div>
+        <div class="row"><div class="lbl">Opmerking</div><div id="mOpm">—</div></div>
+        <div class="row">
+          <div class="lbl">Status</div>
+          <div class="row" style="grid-template-columns:1fr auto;gap:.5rem">
+            <select id="mStatus" class="select">
+              <option>nieuw</option>
+              <option>in behandeling</option>
+              <option>afgerond</option>
+            </select>
+            <button id="mSave" class="btn primary">Opslaan</button>
+          </div>
         </div>
       </div>
-    </section>
-
-    <!-- ====== DEMO-AANVRAGEN (ADMIN ONLY) ====== -->
-    <section id="view-demos" class="hidden">
-      <h1 class="section-title">Demo-aanvragen</h1>
-      <div class="grid" id="demo-list"></div>
-      <div id="demo-empty" class="empty hidden">Nog geen demo-aanvragen.</div>
-    </section>
-  </main>
+      <div class="m-actions">
+        <a id="mailtoBtn" class="btn">Mail</a>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-    import {
-      getFirestore, collection, query, where, getDocs, doc, getDoc,
-      orderBy, onSnapshot, updateDoc
-    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+    import { getFirestore, collection, query, orderBy, onSnapshot, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
-    // 🔧 jouw Firebase project
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
@@ -112,169 +119,119 @@
     const auth = getAuth(app);
     const db = getFirestore(app);
 
-    // UI refs
-    const menuItems = document.querySelectorAll(".menu-item[data-view]");
-    const views = {
-      modules: document.getElementById("view-modules"),
-      profile: document.getElementById("view-profile"),
-      demos: document.getElementById("view-demos")
-    };
-    const adminTab = document.getElementById("adminTab");
+    const listEl = document.getElementById("list");
+    const emptyEl = document.getElementById("empty");
     const logoutBtn = document.getElementById("logout");
 
-    const moduleList = document.getElementById("module-list");
-    const searchInput = document.getElementById("search");
-    const welcomeTitle = document.getElementById("welcome-title");
+    // Modal refs
+    const modalWrap = document.getElementById("modalWrap");
+    const mClose = document.getElementById("mClose");
+    const mTitle = document.getElementById("mTitle");
+    const mNaam = document.getElementById("mNaam");
+    const mRol = document.getElementById("mRol");
+    const mSchool = document.getElementById("mSchool");
+    const mEmail = document.getElementById("mEmail");
+    const mTel = document.getElementById("mTel");
+    const mInteresse = document.getElementById("mInteresse");
+    const mOpm = document.getElementById("mOpm");
+    const mStatus = document.getElementById("mStatus");
+    const mSave = document.getElementById("mSave");
+    const mailtoBtn = document.getElementById("mailtoBtn");
 
-    const profielNaam = document.getElementById("profiel-naam");
-    const profielRol = document.getElementById("profiel-rol");
-    const profielOrg = document.getElementById("profiel-org");
+    let currentId = null;
+    let currentData = null;
 
-    const demoList = document.getElementById("demo-list");
-    const demoEmpty = document.getElementById("demo-empty");
+    function openModal(){ modalWrap.style.display = "grid"; modalWrap.setAttribute("aria-hidden","false"); }
+    function closeModal(){ modalWrap.style.display = "none"; modalWrap.setAttribute("aria-hidden","true"); currentId=null; currentData=null; }
+    mClose.addEventListener("click", closeModal);
+    modalWrap.addEventListener("click", (e)=>{ if(e.target === modalWrap) closeModal(); });
 
-    let modulesData = [];
-    let userRole = "user";
-
-    // Simple view switcher
-    function show(view){
-      Object.values(views).forEach(v => v.classList.add("hidden"));
-      views[view].classList.remove("hidden");
-      menuItems.forEach(i => i.classList.toggle("active", i.dataset.view === view));
-    }
-    menuItems.forEach(i => i.addEventListener("click", () => show(i.dataset.view)));
-
-    // Auth
     onAuthStateChanged(auth, async (user)=>{
-      if(!user){ location.href = "index.html"; return; }
-
-      // user doc
-      const userRef = doc(db, "users", user.uid);
-      const userSnap = await getDoc(userRef);
-      const udata = userSnap.exists() ? userSnap.data() : {};
-      const name = udata.name || "Gebruiker";
-      userRole = (udata.role || "user").toLowerCase();
-      const org = udata.organization || "—";
-
-      // profile view fill
-      profielNaam.textContent = name;
-      profielRol.textContent = userRole;
-      profielOrg.textContent = org;
-
-      // header
-      welcomeTitle.textContent = `Welkom ${name}, hier staan jouw modules`;
-
-      // show/hide admin tab
-      if(userRole === "admin"){
-        adminTab.classList.remove("hidden");
-      } else {
-        adminTab.classList.add("hidden");
+      if(!user){ location.href="index.html"; return; }
+      // guard admin
+      const u = await getDoc(doc(db,"users",user.uid));
+      if(!u.exists() || (u.data().role||"").toLowerCase()!=="admin"){
+        alert("⛔ Geen toegang."); location.href="dashboard.html"; return;
       }
+      // live list
+      const q = query(collection(db,"demoRequests"), orderBy("createdAt","desc"));
+      onSnapshot(q,(snap)=>{
+        listEl.innerHTML = "";
+        if(snap.empty){ emptyEl.style.display="block"; return; }
+        emptyEl.style.display="none";
+        snap.forEach(d=>{
+          const data = d.data();
+          const status = (data.status||"nieuw").toLowerCase();
+          const badgeClass = status==="nieuw"?"b-nieuw":status==="in behandeling"?"b-inb":"b-afg";
+          const school = data.school || data.organisatie || data.organization || "—";
+          const card = document.createElement("div");
+          card.className = "card";
+          card.innerHTML = `
+            <div class="left">
+              <div class="name">${data.naam||"Onbekend"}</div>
+              <div class="school">${school}</div>
+            </div>
+            <div class="right">
+              <span class="badge ${badgeClass}">${status}</span>
+            </div>
+          `;
+          card.addEventListener("click", ()=>{
+            currentId = d.id;
+            currentData = data;
+            // fill modal
+            mTitle.textContent = `Aanvraag — ${data.naam||"Onbekend"}`;
+            mNaam.textContent = data.naam || "—";
+            mRol.textContent = data.rol || "—";
+            mSchool.textContent = school;
+            mEmail.textContent = data.email || "—";
+            mTel.textContent = data.telefoon || "—";
+            mOpm.textContent = data.opmerking || "—";
+            // interesse chips
+            mInteresse.innerHTML = "";
+            const ints = Array.isArray(data.interesse) ? data.interesse : (data.interesse ? [data.interesse] : []);
+            if(ints.length===0){ mInteresse.innerHTML = "<span class='muted'>—</span>"; }
+            else { ints.forEach(x=>{ const c=document.createElement("span"); c.className="chip"; c.textContent=x; mInteresse.appendChild(c); }); }
+            // status
+            mStatus.value = (data.status||"nieuw").toLowerCase();
+            // mailto
+            const subject = encodeURIComponent(`Codeblocks — Demo-aanvraag (${data.naam||""})`);
+            const body = encodeURIComponent(
+`Beste ${data.naam||"—"},
 
-      // modules query
-      const mq = query(collection(db, "modules"), where("assignedTo", "array-contains", user.email));
-      const ms = await getDocs(mq);
-      modulesData = ms.docs.map(d => ({ id: d.id, ...d.data() }));
-      renderModules(modulesData);
+Bedankt voor je demo-aanvraag bij Codeblocks.
 
-      // demos live (admin only)
-      if(userRole === "admin"){
-        const dq = query(collection(db, "demoRequests"), orderBy("createdAt", "desc"));
-        onSnapshot(dq, (snap)=>{
-          const items = [];
-          snap.forEach(docu => items.push({ id: docu.id, ...docu.data() }));
-          renderDemos(items);
+Samenvatting:
+• Rol: ${data.rol||"—"}
+• School/organisatie: ${school}
+• Interesse: ${ints.join(", ") || "—"}
+• Opmerking: ${data.opmerking||"—"}
+
+Graag hoor ik welke momenten passen voor een korte kennismaking.
+
+Met vriendelijke groet,
+Codeblocks`
+            );
+            const mail = data.email || "";
+            mailtoBtn.href = `mailto:${mail}?subject=${subject}&body=${body}`;
+            openModal();
+          });
+          listEl.appendChild(card);
         });
+      });
+    });
+
+    mSave.addEventListener("click", async ()=>{
+      if(!currentId) return;
+      try{
+        await updateDoc(doc(db,"demoRequests",currentId), { status: mStatus.value });
+        mSave.textContent = "Opgeslagen";
+        setTimeout(()=> mSave.textContent="Opslaan", 900);
+      }catch(e){
+        console.error(e); alert("Updaten mislukt");
       }
     });
 
-    function renderModules(data){
-      moduleList.innerHTML = "";
-      if(!data.length){
-        moduleList.innerHTML = "<p class='empty'>Geen modules gevonden.</p>";
-        return;
-      }
-      data.forEach((m, idx)=>{
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.animationDelay = `${idx*0.05}s`;
-
-        if(m.thumbnail){
-          const img = document.createElement("img");
-          img.src = m.thumbnail; img.alt = m.title || "Module"; img.style.width="100%";
-          img.style.height="160px"; img.style.objectFit="cover"; img.style.borderRadius=".5rem"; img.style.marginBottom="1rem";
-          card.appendChild(img);
-        }
-        const t = document.createElement("div"); t.className="card-title"; t.textContent = m.title || "Naamloze module";
-        const s = document.createElement("div"); s.className="card-subtitle"; s.textContent = m.subtitle || "Codeblocks Lesmodule";
-        const a = document.createElement("a"); a.href = m.url || "#"; a.target="_blank"; a.textContent = "Open module →";
-        card.append(t,s,a);
-        moduleList.appendChild(card);
-      });
-    }
-
-    searchInput.addEventListener("input", ()=>{
-      const term = searchInput.value.toLowerCase();
-      const filtered = modulesData.filter(m => (m.title||"").toLowerCase().includes(term));
-      renderModules(filtered);
-    });
-
-    // ----- DEMOS (admin) -----
-    function renderDemos(items){
-      demoList.innerHTML = "";
-      demoEmpty.classList.toggle("hidden", items.length > 0);
-      items.forEach((d, idx)=>{
-        const card = document.createElement("div");
-        card.className = "card";
-        card.style.animationDelay = `${idx*0.04}s`;
-
-        const status = (d.status||"nieuw").toLowerCase();
-        const badge = `<span class="badge ${status === "nieuw" ? "nieuw" : status === "in behandeling" || status==="in_behandeling" ? "inb" : "afg"}">${status}</span>`;
-
-        const title = document.createElement("div");
-        title.className = "card-title";
-        title.innerHTML = `${d.naam||"Onbekend"} <span class="muted">(${d.rol||"—"})</span> ${badge}`;
-
-        const sub = document.createElement("div");
-        sub.className = "card-subtitle";
-        const interesses = Array.isArray(d.interesse) ? d.interesse.join(", ") : (d.interesse || "—");
-        sub.innerHTML = `
-          <div><span class="muted">E-mail:</span> ${d.email||"—"}</div>
-          <div><span class="muted">Tel:</span> ${d.telefoon||"—"}</div>
-          <div><span class="muted">Interesse:</span> ${interesses}</div>
-          <div><span class="muted">Opmerking:</span> ${d.opmerking||"—"}</div>
-        `;
-
-        const row = document.createElement("div"); row.className = "row";
-        const sel = document.createElement("select"); sel.className = "select";
-        ["nieuw","in behandeling","afgerond"].forEach(s=>{
-          const opt = document.createElement("option");
-          opt.value = s; opt.textContent = s;
-          if(s === status) opt.selected = true;
-          sel.appendChild(opt);
-        });
-        const btn = document.createElement("button"); btn.className="btn primary"; btn.textContent="Opslaan";
-        btn.addEventListener("click", async ()=>{
-          btn.disabled = true; btn.textContent = "Opslaan…";
-          try{
-            await updateDoc(doc(db,"demoRequests", d.id), { status: sel.value });
-            btn.textContent = "Opgeslagen";
-            setTimeout(()=>{ btn.textContent="Opslaan"; btn.disabled=false; }, 800);
-          }catch(e){
-            console.error(e); btn.disabled=false; btn.textContent="Opslaan";
-            alert("Updaten mislukt");
-          }
-        });
-        row.append(sel, btn);
-
-        card.append(title, sub, row);
-        demoList.appendChild(card);
-      });
-    }
-
-    // Logout
     logoutBtn.addEventListener("click", ()=> signOut(auth).then(()=> location.href="index.html"));
-
   </script>
 </body>
 </html>
