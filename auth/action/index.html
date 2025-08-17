@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Codeblocks • Auth-actie</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+<style>
+  :root{--bg:#070a19;--card:#10152f;--pri:#7355ff;--pri2:#a18bff;--text:#e7e9f7;--mut:#8a8fae;--r:16px}
+  *{box-sizing:border-box} body{margin:0;min-height:100svh;display:grid;place-items:center;font-family:Inter,system-ui;background:radial-gradient(60% 60% at 20% 110%,#0e1430 0%,#070a19 60%);color:var(--text)}
+  .card{width:min(92vw,500px);background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.02));
+    border:1px solid rgba(255,255,255,.08);border-radius:var(--r);padding:28px;box-shadow:0 20px 60px rgba(0,0,0,.45)}
+  h1{font-size:1.4rem;margin:0 0 .25rem;background:linear-gradient(90deg,var(--pri),var(--pri2));
+    -webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  p{color:var(--mut);margin:.25rem 0 .75rem}
+  label{display:block;color:var(--mut);margin:10px 2px 6px}
+  input{width:100%;padding:12px;border-radius:12px;border:1px solid #2a2e43;background:#0f1430;color:var(--text)}
+  .btn{width:100%;margin-top:12px;padding:12px;border-radius:12px;border:0;color:#fff;font-weight:700;
+    background:linear-gradient(90deg,var(--pri),var(--pri2));box-shadow:0 8px 24px -6px rgba(115,85,255,.5);cursor:pointer}
+  .mut{color:var(--mut);text-align:center;margin-top:8px}
+  .ok{color:#a6f3b1;text-align:center;min-height:1.2em}
+  .err{color:#ff7b7b;text-align:center;min-height:1.2em}
+  .logo{display:block;width:140px;margin:0 auto 8px}
+  .hide{display:none}
+</style>
+</head>
+<body>
+  <div class="card">
+    <img class="logo" src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks">
+    <h1 id="title">Bezig…</h1>
+    <p id="lead">Even geduld.</p>
+
+    <!-- RESET UI -->
+    <div id="resetBox" class="hide">
+      <label for="pw1">Nieuw wachtwoord</label>
+      <input id="pw1" type="password" placeholder="••••••••" autocomplete="new-password">
+      <label for="pw2">Bevestig wachtwoord</label>
+      <input id="pw2" type="password" placeholder="••••••••" autocomplete="new-password">
+      <div id="resetMsg" class="err"></div>
+      <button id="resetBtn" class="btn">Wachtwoord instellen</button>
+      <p class="mut">Na het instellen kun je inloggen op <a href="/" style="color:#a18bff">login.codeblocks.nl</a>.</p>
+    </div>
+
+    <!-- GENERIC RESULT -->
+    <div id="doneOk" class="ok hide"></div>
+    <div id="doneErr" class="err hide"></div>
+  </div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+  import {
+    getAuth, verifyPasswordResetCode, confirmPasswordReset,
+    applyActionCode, checkActionCode
+  } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+  // ---- Firebase config (zelfde als login)
+  const firebaseConfig = {
+    apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
+    authDomain: "codeblocks-app.firebaseapp.com",
+    projectId: "codeblocks-app",
+    storageBucket: "codeblocks-app.firebasestorage.app",
+    messagingSenderId: "341679011888",
+    appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
+  };
+  const app = initializeApp(firebaseConfig);
+  const auth = getAuth(app);
+
+  // ---- Helpers
+  const qs = new URLSearchParams(location.search);
+  const mode    = qs.get("mode");     // resetPassword | verifyEmail | recoverEmail
+  const oobCode = qs.get("oobCode");  // de unieke actie-code
+  const cont    = qs.get("continueUrl"); // optioneel
+
+  const title = document.getElementById("title");
+  const lead  = document.getElementById("lead");
+  const resetBox = document.getElementById("resetBox");
+  const resetBtn = document.getElementById("resetBtn");
+  const pw1 = document.getElementById("pw1");
+  const pw2 = document.getElementById("pw2");
+  const resetMsg = document.getElementById("resetMsg");
+  const doneOk = document.getElementById("doneOk");
+  const doneErr = document.getElementById("doneErr");
+
+  function show(el){ el.classList.remove("hide"); }
+  function hide(el){ el.classList.add("hide"); }
+  function redirectAfter(ms=1200){
+    if (cont) return setTimeout(()=>location.href = cont, ms);
+    setTimeout(()=>location.href = "/", ms);
+  }
+
+  // ---- Router
+  (async () => {
+    try{
+      if(!mode || !oobCode) throw new Error("Ongeldige link.");
+
+      if(mode === "resetPassword"){
+        title.textContent = "Wachtwoord resetten";
+        lead.textContent = "Kies je nieuwe wachtwoord.";
+        // Check dat de code geldig is
+        await verifyPasswordResetCode(auth, oobCode);
+        show(resetBox);
+
+        resetBtn.onclick = async () => {
+          resetMsg.textContent = "";
+          const a = pw1.value.trim(), b = pw2.value.trim();
+          if(a.length < 6){ resetMsg.textContent = "Minimaal 6 tekens."; return; }
+          if(a !== b){ resetMsg.textContent = "Wachtwoorden komen niet overeen."; return; }
+          try{
+            await confirmPasswordReset(auth, oobCode, a);
+            hide(resetBox);
+            doneOk.textContent = "Wachtwoord ingesteld. Je kunt nu inloggen.";
+            show(doneOk); redirectAfter();
+          }catch(e){
+            resetMsg.textContent = mapErr(e.code);
+          }
+        };
+        return;
+      }
+
+      if(mode === "verifyEmail"){
+        title.textContent = "E-mailadres bevestigen";
+        lead.textContent = "Even je account bevestigen…";
+        await applyActionCode(auth, oobCode);
+        doneOk.textContent = "Je e-mailadres is bevestigd!";
+        show(doneOk); redirectAfter();
+        return;
+      }
+
+      if(mode === "recoverEmail"){
+        title.textContent = "E-mailherstel";
+        lead.textContent = "Herstelverzoek verwerken…";
+        // optioneel check informatie
+        await checkActionCode(auth, oobCode);
+        await applyActionCode(auth, oobCode);
+        doneOk.textContent = "Je e-mailadres is hersteld.";
+        show(doneOk); redirectAfter();
+        return;
+      }
+
+      throw new Error("Onbekende actie.");
+    }catch(e){
+      doneErr.textContent = mapErr(e.code) || e.message || "Link verlopen of ongeldig.";
+      show(doneErr);
+    }
+  })();
+
+  function mapErr(code){
+    const M = {
+      "auth/expired-action-code":"Link is verlopen.",
+      "auth/invalid-action-code":"Ongeldige of al gebruikte link.",
+      "auth/user-disabled":"Account is gedeactiveerd.",
+      "auth/user-not-found":"Account bestaat niet (meer)."
+    };
+    return M[code] || "";
+  }
+</script>
+</body>
+</html>
