@@ -3,240 +3,154 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Inloggen - Codeblocks</title>
+  <title>Codeblocks • Login/Registratie</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
-    :root {
-      --clr-bg: #070a19;
-      --clr-bg-accent: #10152f;
-      --clr-primary: #7355ff;
-      --clr-primary-light: #a18bff;
-      --clr-text: #e7e9f7;
-      --clr-text-muted: #8a8fae;
-      --radius: 1rem;
-      --transition: 220ms ease;
+    :root{
+      --clr-bg:#070a19;
+      --clr-bg-accent:#10152f;
+      --clr-primary:#7355ff;
+      --clr-primary-2:#a18bff;
+      --clr-text:#e7e9f7;
+      --clr-muted:#8a8fae;
+      --radius:16px;
+      --t:260ms cubic-bezier(.2,.7,.2,1);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    html{scroll-behavior:smooth}
+    body{
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:radial-gradient(1200px 700px at 20% 120%, #0e1430 0%, #070a19 55%);
+      color:var(--clr-text); min-height:100svh; display:grid; place-items:center; overflow:hidden;
+    }
+    .glow, .glow2, .glow3{
+      position:fixed; width:70vmin; height:70vmin; border-radius:50%;
+      filter:blur(60px); opacity:.18; pointer-events:none; z-index:0; mix-blend-mode:screen;
+      transform:translateZ(0);
+    }
+    .glow{background:radial-gradient(circle, var(--clr-primary-2), transparent 60%); bottom:-20vmin; left:-10vmin; animation:float1 12s ease-in-out infinite;}
+    .glow2{background:radial-gradient(circle, #4fd1ff, transparent 60%); top:-15vmin; right:-10vmin; opacity:.12; animation:float2 14s ease-in-out infinite;}
+    .glow3{background:radial-gradient(circle, #ff7af6, transparent 60%); bottom:-25vmin; right:-20vmin; opacity:.12; animation:float3 16s ease-in-out infinite;}
+    @keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(2vmin,-2vmin)}}
+    @keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(-2vmin,2vmin)}}
+    @keyframes float3{0%,100%{transform:translate(0,0)}50%{transform:translate(2vmin,1vmin)}}
+
+    .grid{
+      position:fixed; inset:0; background:
+        linear-gradient(transparent 24%, rgba(255,255,255,.035) 25%, rgba(255,255,255,.035) 26%, transparent 27%) 0 0/48px 48px,
+        linear-gradient(90deg,transparent 24%, rgba(255,255,255,.035) 25%, rgba(255,255,255,.035) 26%, transparent 27%) 0 0/48px 48px;
+      opacity:.35; z-index:0; mask-image:radial-gradient(70% 70% at 50% 50%, #000 60%, transparent 100%);
+      animation:gridFloat 20s linear infinite;
+    }
+    @keyframes gridFloat{from{background-position:0 0,0 0}to{background-position:0 48px,48px 0}}
+
+    .card{
+      position:relative; z-index:1; width:min(92vw,440px);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid rgba(255,255,255,.08); border-radius:var(--radius); padding:28px 26px 22px;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+      transform:translateY(18px) scale(.98); opacity:0; animation:cardIn .7s var(--t) forwards;
+    }
+    @keyframes cardIn{to{transform:translateY(0) scale(1); opacity:1}}
+
+    .logo{display:block; width:140px; margin:2px auto 10px auto}
+    h2{font-size:1.55rem; text-align:center; font-weight:700;
+      background:linear-gradient(90deg, var(--clr-primary), var(--clr-primary-2));
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    }
+    .sub{margin-top:6px; text-align:center; color:var(--clr-muted); font-size:.95rem}
+
+    .err{min-height:1.25em; margin:.4rem 0; text-align:center; color:#ff7b7b;}
+
+    label{display:block; font-size:.9rem; color:var(--clr-muted); margin:10px 2px 6px}
+    input{
+      width:100%; background:#0f1430; border:1px solid #2a2e43; color:var(--clr-text);
+      border-radius:12px; padding:12px 12px; font-size:1rem; transition:border-color var(--t), box-shadow var(--t), transform var(--t);
+      outline:none;
+    }
+    input:focus{
+      border-color:var(--clr-primary-2);
+      box-shadow:0 0 0 6px rgba(115,85,255,.12), inset 0 1px 0 rgba(255,255,255,.05);
+      transform:translateZ(0);
     }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
+    .row{display:flex; gap:10px}
+    .row>*{flex:1}
 
-    html {
-      scroll-behavior: smooth;
+    .btn{
+      width:100%; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; position:relative; overflow:hidden;
+      transition:transform var(--t), box-shadow var(--t), filter var(--t);
+      background:linear-gradient(90deg, var(--clr-primary), var(--clr-primary-2)); color:#fff;
+      box-shadow:0 8px 24px -6px rgba(115,85,255,.5);
     }
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(0) scale(.99)}
+    .btn[disabled]{opacity:.7; cursor:not-allowed; filter:saturate(.7)}
+    .btn .shimmer{
+      content:""; position:absolute; inset:0; background:
+        linear-gradient(120deg, transparent 0%, rgba(255,255,255,.15) 18%, transparent 36%);
+      transform:translateX(-120%); animation:shimmer 2.4s ease-in-out infinite;
+      pointer-events:none;
+    }
+    .swap{margin-top:10px; text-align:center; color:var(--clr-muted)}
+    .swap .link{color:var(--clr-primary-2); cursor:pointer; text-decoration:underline}
 
-    body {
-      font-family: "Inter", sans-serif;
-      background-color: var(--clr-bg);
-      color: var(--clr-text);
-      height: 100vh;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      overflow: hidden;
-      position: relative;
-    }
+    .pop{animation:pop .45s var(--t)}
+    @keyframes pop{0%{transform:scale(.98); opacity:.6}70%{transform:scale(1.015)}100%{transform:scale(1); opacity:1}}
 
-    body::before {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background: radial-gradient(ellipse at center, #10152f 0%, #070a19 100%);
-      z-index: -4;
-    }
-
-    body::after {
-      content: "";
-      position: absolute;
-      inset: 0;
-      background-color: transparent;
-      background-image:
-        linear-gradient(0deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%),
-        linear-gradient(90deg, transparent 24%, rgba(255, 255, 255, 0.02) 25%, rgba(255, 255, 255, 0.02) 26%, transparent 27%);
-      background-size: 50px 50px;
-      z-index: -3;
-      opacity: 0.4;
-    }
-
-    .background-glow {
-      position: absolute;
-      bottom: 0;
-      width: 600px;
-      height: 600px;
-      background: radial-gradient(circle, var(--clr-primary-light) 0%, transparent 60%);
-      opacity: 0.15;
-      filter: blur(60px);
-      transform: translateY(50%);
-      z-index: -2;
-      animation: pulseGlow 6s ease-in-out infinite;
-    }
-
-    @keyframes pulseGlow {
-      0%, 100% { opacity: 0.12; transform: scale(1) translateY(50%); }
-      50% { opacity: 0.2; transform: scale(1.1) translateY(50%); }
-    }
-
-    .floating-dot {
-      position: absolute;
-      border-radius: 50%;
-      background: rgba(255, 255, 255, 0.05);
-      backdrop-filter: blur(3px);
-      animation: float 8s infinite ease-in-out alternate;
-      z-index: -2;
-    }
-
-    @keyframes float {
-      0% { transform: translateY(0) rotate(0deg); }
-      100% { transform: translateY(-20px) rotate(360deg); }
-    }
-
-    .login-card {
-      background: var(--clr-bg-accent);
-      border: 1px solid rgba(255,255,255,0.06);
-      padding: 2.5rem;
-      border-radius: var(--radius);
-      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4);
-      width: 90%;
-      max-width: 400px;
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      animation: fadeIn 0.8s ease forwards;
-      opacity: 0;
-      transform: translateY(30px);
-      z-index: 1;
-    }
-
-    @keyframes fadeIn {
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .logo {
-      width: 130px;
-      align-self: center;
-      margin-bottom: 0.5rem;
-    }
-
-    .gradient-text {
-      font-size: 1.4rem;
-      font-weight: 600;
-      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      text-align: center;
-      margin-bottom: 1rem;
-    }
-
-    input {
-      width: 100%;
-      padding: 0.75rem;
-      border-radius: 10px;
-      border: 1px solid #2a2e43;
-      background-color: #0f132c;
-      color: var(--clr-text);
-      font-size: 1rem;
-      transition: border-color var(--transition);
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--clr-primary-light);
-    }
-
-    .login-button {
-      background: linear-gradient(90deg, var(--clr-primary), var(--clr-primary-light));
-      color: white;
-      border: none;
-      border-radius: 10px;
-      padding: 0.75rem;
-      font-weight: 600;
-      cursor: pointer;
-      transition: transform var(--transition), box-shadow var(--transition);
-    }
-
-    .login-button:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px -5px rgba(0,0,0,0.4);
-    }
-
-    .google-button {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 0.6rem;
-      padding: 0.6rem 1rem;
-      border-radius: 8px;
-      background-color: #fff;
-      color: #3c4043;
-      font-weight: 600;
-      font-size: 0.875rem;
-      border: 1px solid rgba(0, 0, 0, 0.2);
-      cursor: pointer;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
-    }
-
-    .google-button:hover {
-      transform: scale(1.02);
-      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
-    }
-
-    .google-button svg {
-      width: 20px;
-      height: 20px;
-    }
-
-    .forgot {
-      font-size: 0.9rem;
-      color: var(--clr-primary-light);
-      text-decoration: none;
-      align-self: flex-start;
-    }
-
-    .error-message {
-      color: #ff6b6b;
-      font-size: 0.95rem;
-      text-align: center;
-      margin: -0.5rem 0 0.5rem 0;
-    }
+    .confetti{position:fixed; inset:0; pointer-events:none; z-index:5}
   </style>
 </head>
 <body>
-  <div class="background-glow"></div>
+  <div class="grid"></div>
+  <div class="glow"></div><div class="glow2"></div><div class="glow3"></div>
 
-  <div class="login-card">
-    <img src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks logo" class="logo">
-    <h2 class="gradient-text">Inloggen bij Codeblocks</h2>
-    <div id="error" class="error-message"></div>
-    <input type="email" placeholder="Gebruikersnaam (e-mail)" id="username">
-    <input type="password" placeholder="Wachtwoord" id="password">
-    <button class="login-button" onclick="loginUser()">Inloggen</button>
-    <button class="google-button" onclick= *hier moet je login with google zetten zodra open* ()">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 262" preserveAspectRatio="xMidYMid meet">
-        <path fill="#4285F4" d="M255.878 133.451c0-10.734-.871-18.567-2.756-26.69H130.55v48.448h71.947c-1.45 12.04-9.283 30.172-26.69 42.356l-.244 1.622 38.755 30.023 2.685.268c24.659-22.774 38.875-56.282 38.875-96.027"/>
-        <path fill="#34A853" d="M130.55 261.1c35.248 0 64.839-11.605 86.453-31.622l-41.196-31.913c-11.024 7.688-25.82 13.055-45.257 13.055-34.523 0-63.824-22.773-74.269-54.25l-1.531.13-40.298 31.187-.527 1.465C35.393 231.798 79.49 261.1 130.55 261.1"/>
-        <path fill="#FBBC05" d="M56.281 156.37c-2.756-8.123-4.351-16.827-4.351-25.82 0-8.994 1.595-17.697 4.206-25.82l-.073-1.73L15.26 71.312l-1.335.635C5.077 89.644 0 109.517 0 130.55s5.077 40.905 13.925 58.602l42.356-32.782"/>
-        <path fill="#EB4335" d="M130.55 50.479c24.514 0 41.05 10.589 50.479 19.438l36.844-35.974C195.245 12.91 165.798 0 130.55 0 79.49 0 35.393 29.301 13.925 71.947l42.211 32.783c10.59-31.477 39.891-54.251 74.414-54.251"/>
-      </svg>
-      Continue with Google (google portaal nog niet open)
+  <div class="card">
+    <img class="logo" src="https://codeblocks.nl/cdn-homepage/codeblocks_logo.png" alt="Codeblocks">
+    <h2 id="title">Inloggen bij Codeblocks</h2>
+    <p class="sub" id="subtitle">Welkom terug! Vul je gegevens in.</p>
+
+    <div id="error" class="err"></div>
+
+    <div id="registerFields" class="pop" style="display:none">
+      <label for="name">Volledige naam</label>
+      <input id="name" type="text" placeholder="Bijv. Alex de Vries">
+      <label for="org">Organisatie / School</label>
+      <input id="org" type="text" placeholder="Bijv. mijnschool">
+    </div>
+
+    <label for="email">E-mail</label>
+    <input id="email" type="email" placeholder="naam@voorbeeld.nl" autocomplete="email">
+
+    <label for="password">Wachtwoord</label>
+    <input id="password" type="password" placeholder="••••••••" autocomplete="current-password">
+
+    <div style="height:10px"></div>
+    <button id="primary" class="btn">
+      <span id="primaryText">Inloggen</span>
+      <span class="shimmer"></span>
     </button>
-    <a href="#" class="forgot">Wachtwoord vergeten?</a>
+
+    <p class="swap">
+      <span id="swapText">Nog geen account?</span>
+      <span class="link" id="swapLink">Registreren</span>
+    </p>
   </div>
+
+  <canvas id="confetti" class="confetti"></canvas>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
     import {
-      getAuth,
-      signInWithEmailAndPassword,
-      onAuthStateChanged,
-      GoogleAuthProvider,
-      signInWithPopup
+      getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword,
+      onAuthStateChanged, updateProfile
     } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+    import {
+      getFirestore, doc, setDoc, getDoc, serverTimestamp
+    } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
+    // --- Firebase
     const firebaseConfig = {
       apiKey: "AIzaSyA0LcMrF62nVwXMtJFpDcPB7bviEZl7Vuk",
       authDomain: "codeblocks-app.firebaseapp.com",
@@ -245,64 +159,169 @@
       messagingSenderId: "341679011888",
       appId: "1:341679011888:web:125666a5a4b0ff9701d5f5"
     };
-
     const app = initializeApp(firebaseConfig);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
-    window.loginUser = async function () {
-      const email = document.getElementById("username").value;
-      const password = document.getElementById("password").value;
-      const errorDiv = document.getElementById("error");
+    // --- UI refs
+    const title = document.getElementById("title");
+    const subtitle = document.getElementById("subtitle");
+    const errorDiv = document.getElementById("error");
+    const primaryBtn = document.getElementById("primary");
+    const primaryText = document.getElementById("primaryText");
+    const swapText = document.getElementById("swapText");
+    const swapLink = document.getElementById("swapLink");
+    const regBox = document.getElementById("registerFields");
+    const emailEl = document.getElementById("email");
+    const passEl = document.getElementById("password");
+    const nameEl = document.getElementById("name");
+    const orgEl = document.getElementById("org");
+
+    let mode = "login"; // or "register"
+
+    swapLink.addEventListener("click", () => {
+      mode = mode === "login" ? "register" : "login";
+      applyMode();
+    });
+
+    function applyMode(){
       errorDiv.textContent = "";
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-      } catch (error) {
-        handleAuthError(error.code);
+      if(mode === "login"){
+        title.textContent = "Inloggen bij Codeblocks";
+        subtitle.textContent = "Welkom terug! Vul je gegevens in.";
+        primaryText.textContent = "Inloggen";
+        swapText.textContent = "Nog geen account?";
+        swapLink.textContent = "Registreren";
+        regBox.style.display = "none";
+      }else{
+        title.textContent = "Account aanmaken";
+        subtitle.textContent = "Vul je gegevens in om te starten.";
+        primaryText.textContent = "Registreren";
+        swapText.textContent = "Al een account?";
+        swapLink.textContent = "Inloggen";
+        regBox.style.display = "block";
       }
-    };
+      document.querySelector(".card").classList.add("pop");
+      setTimeout(()=>document.querySelector(".card").classList.remove("pop"), 450);
+    }
+    applyMode();
 
-    window.loginWithGoogle = async function () {
-      const provider = new GoogleAuthProvider();
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (error) {
-        document.getElementById("error").textContent = "Google login mislukt: " + error.message;
-      }
-    };
+    function setLoading(on){
+      primaryBtn.disabled = on;
+      primaryText.textContent = on ? (mode==="login"?"Inloggen…":"Registreren…") : (mode==="login"?"Inloggen":"Registreren");
+    }
 
-    function handleAuthError(code) {
-      const errorDiv = document.getElementById("error");
-      if (["auth/user-not-found", "auth/wrong-password", "auth/invalid-email", "auth/missing-password"].includes(code)) {
-        errorDiv.textContent = "Geen geldige login. Controleer je gegevens.";
-      } else if (code === "auth/email-already-in-use") {
-        errorDiv.textContent = "Dit e-mailadres is al in gebruik.";
-      } else if (code === "auth/weak-password") {
-        errorDiv.textContent = "Gebruik een sterker wachtwoord (minimaal 6 tekens).";
-      } else {
-        errorDiv.textContent = "Er is iets misgegaan. Probeer het opnieuw.";
+    function handleAuthError(code){
+      const map = {
+        "auth/invalid-email":"Geen geldige e-mail.",
+        "auth/missing-password":"Voer een wachtwoord in.",
+        "auth/wrong-password":"Onjuist wachtwoord.",
+        "auth/user-not-found":"Geen account gevonden met dit e-mailadres.",
+        "auth/email-already-in-use":"Dit e-mailadres is al in gebruik.",
+        "auth/weak-password":"Gebruik een sterker wachtwoord (min. 6 tekens).",
+        "auth/network-request-failed":"Netwerkfout. Probeer opnieuw."
+      };
+      errorDiv.textContent = map[code] || "Er is iets misgegaan. Probeer het opnieuw.";
+    }
+
+    async function ensureUserDoc(user, extra={}){
+      const ref = doc(db, "users", user.uid);
+      const snap = await getDoc(ref);
+      if(!snap.exists()){
+        const payload = {
+          name: user.displayName || extra.name || "",
+          organization: extra.organization || "",
+          role: "user",
+          email: user.email || "",
+          createdAt: serverTimestamp(),
+        };
+        await setDoc(ref, payload, { merge:true });
+        celebrate();
       }
     }
 
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
+    async function doLogin(email, pass){
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      await ensureUserDoc(cred.user);
+    }
+
+    async function doRegister(name, org, email, pass){
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if(name) await updateProfile(cred.user, { displayName:name });
+      await ensureUserDoc(cred.user, { name, organization:org });
+    }
+
+    primaryBtn.addEventListener("click", async () => {
+      setLoading(true);
+      errorDiv.textContent = "";
+      const email = emailEl.value.trim();
+      const pass = passEl.value;
+      try{
+        if(mode==="login"){
+          await doLogin(email, pass);
+        }else{
+          const name = (nameEl?.value || "").trim();
+          const org = (orgEl?.value || "").trim();
+          await doRegister(name, org, email, pass);
+        }
         window.location.href = "dashboard.html";
+      }catch(e){
+        handleAuthError(e.code);
+      }finally{
+        setLoading(false);
       }
     });
+
+    // Enter-to-submit
+    [emailEl, passEl].forEach(el => el.addEventListener("keydown", e=>{
+      if(e.key==="Enter") primaryBtn.click();
+    }));
+
+    onAuthStateChanged(auth, (user) => {
+      if(user){ /* al ingelogd? eventueel auto-redirect hier */ }
+    });
+
+    // --- tiny confetti
+    function celebrate(){
+      const c = document.getElementById("confetti");
+      const ctx = c.getContext("2d");
+      const dpr = Math.max(1, window.devicePixelRatio || 1);
+      function resize(){ c.width = innerWidth*dpr; c.height = innerHeight*dpr; }
+      resize(); let parts = Array.from({length:80}, () => ({
+        x: Math.random()*c.width, y: -Math.random()*c.height*.2,
+        r: 3 + Math.random()*3, vy: 1 + Math.random()*3, vx: (Math.random()-.5)*1.2,
+        a: Math.random()*Math.PI*2
+      }));
+      let t=0; const id = setInterval(()=>{
+        ctx.clearRect(0,0,c.width,c.height);
+        parts.forEach(p=>{
+          p.y += p.vy; p.x += p.vx; p.a += .1;
+          ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.a);
+          ctx.fillStyle = ["#7355ff","#a18bff","#4fd1ff","#ff7af6"][p.r|0 % 4];
+          ctx.fillRect(-p.r,-p.r, p.r*2, p.r*2);
+          ctx.restore();
+        });
+        parts = parts.filter(p=>p.y < c.height+20);
+        if(++t>120) { clearInterval(id); ctx.clearRect(0,0,c.width,c.height); }
+      }, 16);
+      window.addEventListener("resize", resize, { once:true });
+    }
   </script>
 
   <script>
-    for (let i = 0; i < 20; i++) {
-      const dot = document.createElement("div");
-      dot.classList.add("floating-dot");
-      const size = Math.random() * 20 + 10;
-      dot.style.width = `${size}px`;
-      dot.style.height = `${size}px`;
-      dot.style.left = `${Math.random() * 100}%`;
-      dot.style.top = `${Math.random() * 100}%`;
-      dot.style.animationDuration = `${5 + Math.random() * 10}s`;
-      dot.style.animationDelay = `${Math.random() * 5}s`;
-      document.body.appendChild(dot);
+    // Cosmetische floating dots
+    const DOTS = 22;
+    for(let i=0;i<DOTS;i++){
+      const d = document.createElement('div');
+      d.style.position='fixed'; d.style.borderRadius='50%';
+      d.style.background='rgba(255,255,255,.05)'; d.style.backdropFilter='blur(2px)';
+      const s = 8 + Math.random()*18; d.style.width=s+'px'; d.style.height=s+'px';
+      d.style.left=Math.random()*100+'%'; d.style.top=Math.random()*100+'%';
+      d.style.zIndex=0;
+      const dur = 6 + Math.random()*10;
+      d.animate([{transform:'translateY(0) rotate(0)'},{transform:'translateY(-16px) rotate(360deg)'}],
+        {duration:dur*1000, direction:'alternate', iterations:Infinity, easing:'ease-in-out'});
+      document.body.appendChild(d);
     }
   </script>
 </body>
