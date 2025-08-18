@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Codeblocks • Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --clr-bg:#070a19;
+      --clr-bg-accent:#10152f;
+      --clr-primary:#7355ff;
+      --clr-primary-2:#a18bff;
+      --clr-text:#e7e9f7;
+      --clr-muted:#8a8fae;
+      --radius:16px;
+      --t:260ms cubic-bezier(.2,.7,.2,1);
+    }
+    *{box-sizing:border-box;margin:0;padding:0}
+    body {
+      font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--clr-bg);
+      color:var(--clr-text);
+      padding:2rem;
+    }
+    h1 {font-size:1.5rem;margin-bottom:1rem}
+    .modules-grid {
+      display:grid;
+      gap:1rem;
+      grid-template-columns:repeat(auto-fill, minmax(260px, 1fr));
+    }
+    .card {
+      background:var(--clr-bg-accent);
+      color:var(--clr-text);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius:var(--radius);
+      padding:1rem;
+      text-decoration:none;
+      transition:var(--t);
+      display:block;
+    }
+    .card:hover {transform:translateY(-2px)}
+    .card h3 {margin:0 0 .25rem 0;font-size:1.1rem}
+    .card p {margin:0;color:var(--clr-muted)}
+    .empty-state {
+      background: var(--clr-bg-accent);
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      padding:1.5rem;
+      text-align:center;
+    }
+    .empty-state p {margin:.5rem 0}
+    .actions {margin-top:.75rem;display:flex;gap:.5rem;justify-content:center;flex-wrap:wrap}
+    .btn {
+      display:inline-block;padding:.6rem .9rem;border-radius:12px;
+      background:var(--clr-primary);color:var(--clr-text);
+      text-decoration:none;transition:var(--t);
+    }
+    .btn:hover {transform:translateY(-1px)}
+    .btn-secondary {background:var(--clr-primary-2)}
+    #modules-loading {color:var(--clr-muted)}
+  </style>
+</head>
+<body>
+  <h1>Uw modules</h1>
+
+  <section id="modules-section">
+    <!-- Loading -->
+    <div id="modules-loading" aria-live="polite">Modules laden…</div>
+
+    <!-- Grid -->
+    <div id="modules-grid" class="modules-grid" hidden></div>
+
+    <!-- Empty state -->
+    <div id="modules-empty" class="empty-state" hidden aria-live="polite">
+      <p>Er staan op dit moment geen modules toegewezen.</p>
+      <p>
+        Vraag een demo aan of kom in contact om te kijken wat we voor u kunnen doen.<br/>
+        <a href="mailto:support@codeblocks.nl">support@codeblocks.nl</a>
+      </p>
+      <div class="actions">
+        <a class="btn" href="/demo">Vraag een demo aan</a>
+        <a class="btn btn-secondary" href="/contact">Neem contact op</a>
+      </div>
+    </div>
+  </section>
+
+  <script>
+    // 👉 Dit vervang je later met je Firebase-code
+    async function fetchAssignedModules() {
+      // Test scenario’s:
+      // return []; // geen modules
+      // throw new Error("network"); // simuleer error
+      return [
+        { id:"m1", title:"Intro HTML", summary:"Basis tags & structuur", href:"/modules/html-intro" },
+        { id:"m2", title:"CSS Fundamentals", summary:"Selectors, box model", href:"/modules/css-fun" }
+      ];
+    }
+
+    function renderModuleCard(mod) {
+      const a = document.createElement("a");
+      a.href = mod.href || "#";
+      a.className = "card";
+      a.innerHTML = `
+        <h3>${mod.title ?? "Module"}</h3>
+        <p>${mod.summary ?? ""}</p>
+      `;
+      return a;
+    }
+
+    async function initModules() {
+      const grid   = document.getElementById("modules-grid");
+      const empty  = document.getElementById("modules-empty");
+      const loadEl = document.getElementById("modules-loading");
+
+      const showEmpty = () => {
+        grid.hidden = true;
+        empty.hidden = false;
+        loadEl.hidden = true;
+      };
+
+      try {
+        grid.hidden = true;
+        empty.hidden = true;
+        loadEl.hidden = false;
+
+        const modules = await fetchAssignedModules();
+
+        if (!Array.isArray(modules) || modules.length === 0) {
+          showEmpty();
+          return;
+        }
+
+        grid.innerHTML = "";
+        modules.forEach(m => grid.appendChild(renderModuleCard(m)));
+        grid.hidden = false;
+        empty.hidden = true;
+        loadEl.hidden = true;
+
+      } catch(e) {
+        showEmpty();
+        console.error("Modules ophalen mislukt:", e);
+      }
+    }
+
+    document.addEventListener("DOMContentLoaded", initModules);
+  </script>
+</body>
+</html>
